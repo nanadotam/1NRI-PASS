@@ -15,15 +15,15 @@ import { ArrowLeft, Loader2, Sparkles } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
 
+const passColorOptions = ["dark-green", "dark-purple", "midnight-blue", "deep-burgundy"] as const
+
 const formSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(1, "Last name is required"),
   phone: z.string().min(10, "Please enter a valid phone number"),
   email: z.string().email("Please enter a valid email address"),
   hearAbout: z.string().min(1, "Please select how you heard about Kairos"),
-  passColor: z.enum(["dark-green", "dark-purple", "midnight-blue", "deep-burgundy"], {
-    required_error: "Please select a pass color",
-  }),
+  // passColor is not included in the form fields anymore
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -43,6 +43,11 @@ const generateKairosId = (): string => {
   return `KAIROS-${randomNumber}`
 }
 
+function getRandomPassColor(): typeof passColorOptions[number] {
+  const idx = Math.floor(Math.random() * passColorOptions.length)
+  return passColorOptions[idx]
+}
+
 export function RegistrationForm() {
   const router = useRouter()
   const { dispatch, submitToBackend } = useTicketing()
@@ -56,17 +61,20 @@ export function RegistrationForm() {
       phone: "",
       email: "",
       hearAbout: "",
-      passColor: "dark-green",
     },
   })
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true)
 
+    // Randomize pass color
+    const passColor = getRandomPassColor()
+
     // Create attendee data
     const attendeeData = {
       id: generateKairosId(),
       ...data,
+      passColor,
       fullName: `${data.firstName} ${data.lastName}`, // For backward compatibility with context
       timestamp: new Date().toISOString(),
     }
@@ -206,29 +214,7 @@ export function RegistrationForm() {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="passColor"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Select Pass Color</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a color" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="dark-green">Dark Green</SelectItem>
-                            <SelectItem value="dark-purple">Dark Purple</SelectItem>
-                            <SelectItem value="midnight-blue">Midnight Blue</SelectItem>
-                            <SelectItem value="deep-burgundy">Deep Burgundy</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Pass color selection removed and randomized in submission */}
 
                   <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                     {isSubmitting ? (
