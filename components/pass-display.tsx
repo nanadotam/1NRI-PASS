@@ -175,22 +175,22 @@ export function PassDisplay() {
             )}
           </div>
 
-          {/* Pass Design - More Accurate Dimensions */}
+          {/* Pass Design - Optimized Dimensions */}
           <div className="flex justify-center">
             <div 
               ref={passRef} 
               className="relative overflow-hidden shadow-2xl rounded-2xl"
               style={{ 
                 width: '320px', 
-                height: '568px', // More accurate 9:16 ratio for better scaling
+                height: '568px', // 9:16 ratio for better scaling
                 backgroundColor: colors.background 
               }}
             >
-              {/* QR Code Area - Top Section */}
-              <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-white p-3 rounded-2xl shadow-lg">
+              {/* QR Code Area - Top Section - Slightly Larger */}
+              <div className="absolute top-3 left-1/2 transform -translate-x-1/2 bg-white p-3 rounded-2xl shadow-lg">
                 <QRCodeSVG 
                   value={qrCodeUrl} 
-                  size={140} 
+                  size={170} 
                   level="H" 
                   includeMargin={false}
                   fgColor="#000000"
@@ -198,14 +198,14 @@ export function PassDisplay() {
                 />
               </div>
 
-              {/* Main Kairos Logo - Center */}
-              <div className="absolute top-[180px] left-1/2 transform -translate-x-1/2 w-full px-6">
-                <div className="flex justify-center">
+              {/* Main Kairos Logo - Center - Better Positioned */}
+              <div className="absolute top-[190px] left-1/2 transform -translate-x-1/2 w-full px-4">
+                <div className="flex justify-center items-center">
                   <Image
                     src="/images/kairos_PNG_UHD.png"
                     alt="Kairos Logo"
-                    width={280}
-                    height={140}
+                    width={240}
+                    height={120}
                     className="object-contain"
                     style={{
                       filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))'
@@ -214,61 +214,61 @@ export function PassDisplay() {
                 </div>
               </div>
 
-              {/* Attendee Information - Left Side */}
-              <div className="absolute bottom-[180px] left-6">
-                <h3 className="font-jetbrains-mono font-bold text-white text-2xl mb-1 leading-tight">
+              {/* Attendee Information - Left Side - Smaller Font */}
+              <div className="absolute bottom-[140px] left-4">
+                <h3 className="font-jetbrains-mono font-bold text-white text-base mb-1 leading-tight">
                   {currentAttendee.fullName}
                 </h3>
-                <p className="font-jetbrains-mono italic text-white text-sm opacity-75">
+                <p className="font-jetbrains-mono italic text-white text-[10px] opacity-75">
                   Attendee Name
                 </p>
               </div>
 
-              {/* Pass ID - Right Side */}
-              <div className="absolute bottom-[180px] right-6 text-right">
-                <h4 className="font-jetbrains-mono font-bold text-white text-2xl mb-1 leading-tight">
+              {/* Pass ID - Right Side - Smaller Font */}
+              <div className="absolute bottom-[140px] right-4 text-right">
+                <h4 className="font-jetbrains-mono font-bold text-white text-base mb-1 leading-tight">
                   {currentAttendee.id}
                 </h4>
-                <p className="font-jetbrains-mono italic text-white text-sm opacity-75">
+                <p className="font-jetbrains-mono italic text-white text-[10px] opacity-75">
                   PASS ID
                 </p>
               </div>
 
-              {/* Main Quote */}
-              <div className="absolute bottom-[120px] left-6 right-6 text-center">
-                <h2 className="poppins-extrabold italic text-white text-xl leading-tight">
+              {/* Main Quote - Smaller */}
+              <div className="absolute bottom-[100px] left-4 right-4 text-center">
+                <h2 className="poppins-extrabold italic text-white text-base leading-tight">
                   "{kairosQuote}"
                 </h2>
               </div>
 
-              {/* Bible Verse */}
-              <div className="absolute bottom-[50px] left-6 right-6 text-center">
-                <p className="poppins-regular text-white text-sm mb-3 leading-relaxed opacity-95">
+              {/* Bible Verse - Much Smaller */}
+              <div className="absolute bottom-[30px] left-4 right-4 text-center">
+                <p className="poppins-regular text-white text-[9px] mb-1 leading-relaxed opacity-95">
                   {estherVerse.text}
                 </p>
-                <p className="font-jetbrains-mono italic text-white text-sm opacity-75">
+                <p className="font-jetbrains-mono italic text-white text-[8px] opacity-75">
                   {estherVerse.reference}
                 </p>
               </div>
 
-              {/* Footer */}
-              <div className="absolute bottom-3 left-6 right-6 flex justify-between items-center">
+              {/* Footer - Smaller */}
+              <div className="absolute bottom-2 left-4 right-4 flex justify-between items-center">
                 <div className="text-left">
-                  <span className="poppins-medium text-white text-xs opacity-70">Updated </span>
-                  <span className="poppins-bold text-white text-xs opacity-90">August 16, 2025</span>
+                  <span className="poppins-medium text-white text-[8px] opacity-70">Updated </span>
+                  <span className="poppins-bold text-white text-[8px] opacity-90">August 16, 2025</span>
                 </div>
                 <div className="text-right">
-                  <span className="poppins-medium text-white text-xs opacity-70">WWW.1NRI.STORE</span>
+                  <span className="poppins-medium text-white text-[8px] opacity-70">WWW.1NRI.STORE</span>
                 </div>
               </div>
 
-              {/* 1NRI Logo - Top Left */}
-              <div className="absolute top-3 left-3">
+              {/* 1NRI Logo - Top Left - Smaller */}
+              <div className="absolute top-2 left-2">
                 <Image
                   src="/images/1NRI Logo - Fixed - Transparent (1).png"
                   alt="1NRI Logo"
-                  width={28}
-                  height={28}
+                  width={20}
+                  height={20}
                   className="object-contain opacity-60"
                 />
               </div>
