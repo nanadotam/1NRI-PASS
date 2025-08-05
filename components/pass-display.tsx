@@ -187,7 +187,7 @@ export function PassDisplay() {
               }}
             >
               {/* QR Code Area - Top Section - Slightly Larger */}
-              <div className="absolute top-3 left-1/2 transform -translate-x-1/2 bg-white p-3 rounded-2xl shadow-lg">
+              <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-white p-3 rounded-2xl shadow-lg">
                 <QRCodeSVG 
                   value={qrCodeUrl} 
                   size={170} 
@@ -199,7 +199,7 @@ export function PassDisplay() {
               </div>
 
               {/* Main Kairos Logo - Center - Better Positioned */}
-              <div className="absolute top-[190px] left-1/2 transform -translate-x-1/2 w-full px-4">
+              <div className="absolute top-[150px] left-1/2 transform -translate-x-1/2 w-full px-4">
                 <div className="flex justify-center items-center">
                   <Image
                     src="/images/kairos_PNG_UHD.png"
@@ -215,8 +215,8 @@ export function PassDisplay() {
               </div>
 
               {/* Attendee Information - Left Side - Smaller Font */}
-              <div className="absolute bottom-[140px] left-4">
-                <h3 className="font-jetbrains-mono font-bold text-white text-base mb-1 leading-tight">
+              <div className="absolute bottom-[200px] left-4">
+                <h3 className="font-jetbrains-mono font-bold text-white text-sm mb-1 leading-tight">
                   {currentAttendee.fullName}
                 </h3>
                 <p className="font-jetbrains-mono italic text-white text-[10px] opacity-75">
@@ -225,8 +225,8 @@ export function PassDisplay() {
               </div>
 
               {/* Pass ID - Right Side - Smaller Font */}
-              <div className="absolute bottom-[140px] right-4 text-right">
-                <h4 className="font-jetbrains-mono font-bold text-white text-base mb-1 leading-tight">
+              <div className="absolute bottom-[200px] right-4 text-right">
+                <h4 className="font-jetbrains-mono font-bold text-white text-xs mb-1 leading-tight">
                   {currentAttendee.id}
                 </h4>
                 <p className="font-jetbrains-mono italic text-white text-[10px] opacity-75">
@@ -235,14 +235,14 @@ export function PassDisplay() {
               </div>
 
               {/* Main Quote - Smaller */}
-              <div className="absolute bottom-[100px] left-4 right-4 text-center">
-                <h2 className="poppins-extrabold italic text-white text-base leading-tight">
+              <div className="absolute bottom-[150px] left-4 right-4 text-center">
+                <h2 className="poppins-extrabold italic text-white text-sm leading-tight">
                   "{kairosQuote}"
                 </h2>
               </div>
 
               {/* Bible Verse - Much Smaller */}
-              <div className="absolute bottom-[30px] left-4 right-4 text-center">
+              <div className="absolute bottom-[50px] left-4 right-4 text-center">
                 <p className="poppins-regular text-white text-[9px] mb-1 leading-relaxed opacity-95">
                   {estherVerse.text}
                 </p>
