@@ -29,7 +29,6 @@ export function VerifyPage({ passId }: VerifyPageProps) {
     timestamp: string;
   } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [showRedirect, setShowRedirect] = useState(false)
 
   useEffect(() => {
     const fetchAttendeeData = async () => {
@@ -39,13 +38,6 @@ export function VerifyPage({ passId }: VerifyPageProps) {
         
         if (data.success) {
           setAttendeeData(data.data)
-          // Show success for 3 seconds, then redirect to pass page
-          setTimeout(() => {
-            setShowRedirect(true)
-            setTimeout(() => {
-              router.push(`/pass/${passId}`)
-            }, 2000)
-          }, 3000)
         } else {
           setAttendeeData(null)
         }
@@ -58,7 +50,7 @@ export function VerifyPage({ passId }: VerifyPageProps) {
     }
 
     fetchAttendeeData()
-  }, [passId, router])
+  }, [passId])
 
   if (isLoading) {
     return (
@@ -209,24 +201,20 @@ export function VerifyPage({ passId }: VerifyPageProps) {
             </CardContent>
           </Card>
 
-          {showRedirect && (
-            <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
-              <CardContent className="p-6 text-center">
-                <div className="flex items-center justify-center space-x-3 mb-4">
-                  <Camera className="h-8 w-8 text-blue-600" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-blue-800">Create Your Personalized Pass</h3>
-                    <p className="text-sm text-blue-600">Redirecting to upload your photo...</p>
-                  </div>
-                </div>
-                <div className="flex space-x-2 justify-center">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Personalize Pass Button */}
+          <div className="text-center space-y-4">
+            <Button 
+              onClick={() => router.push(`/pass/${passId}/personalize`)}
+              size="lg"
+              className="w-full h-20 text-2xl font-bold bg-gradient-to-r from-green-600 to-purple-600 hover:from-green-700 hover:to-purple-700 text-white shadow-2xl transform hover:scale-105 transition-all duration-200"
+            >
+              <Camera className="mr-4 h-10 w-10" />
+              Personalize Your Pass
+            </Button>
+            <p className="text-xl text-muted-foreground font-medium">
+              Upload your selfie to create a unique memory
+            </p>
+          </div>
 
           <div className="text-center">
             <p className="text-sm text-muted-foreground">

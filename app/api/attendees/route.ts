@@ -98,35 +98,59 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const email = searchParams.get('email')
+    const phone = searchParams.get('phone')
+
+    if (!email && !phone) {
+      return NextResponse.json(
+        { success: false, error: "Email or phone parameter is required" },
+        { status: 400 }
+      )
+    }
+
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
-    
-    const { data, error } = await supabase
-      .from('kairos_passes')
+
+    let query = supabase
+      .from('attendees')
       .select('*')
-      .order('created_at', { ascending: false })
+
+    if (email) {
+      query = query.eq('email', email.toLowerCase().trim())
+    } else if (phone) {
+      query = query.eq('phone_number', phone.trim())
+    }
+
+    const { data, error } = await query.single()
 
     if (error) {
-      console.error("Supabase error:", error)
-      return NextResponse.json({ 
-        success: false, 
-        message: "Failed to fetch passes",
-        error: error.message 
-      }, { status: 500 })
+      if (error.code === 'PGRST116') {
+        // No rows returned
+        return NextResponse.json(
+          { success: false, error: "No attendee found with the provided information" },
+          { status: 404 }
+        )
+      }
+      console.error("Database error:", error)
+      return NextResponse.json(
+        { success: false, error: "Database error" },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({
       success: true,
       data: data
     })
+
   } catch (error) {
-    console.error("Error fetching passes:", error)
-    return NextResponse.json({ 
-      success: false, 
-      message: "Failed to fetch passes",
-      error: error instanceof Error ? error.message : String(error)
-    }, { status: 500 })
+    console.error("API error:", error)
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }

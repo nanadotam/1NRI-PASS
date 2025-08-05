@@ -1,5 +1,5 @@
-import { PassDisplay } from "@/components/pass-display"
+import { PassPage } from "@/components/pass-page"
 
-export default function PassPage() {
-  return <PassDisplay />
+export default function PassPageRoute() {
+  return <PassPage />
 }

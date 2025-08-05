@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { QRCodeSVG } from "qrcode.react"
-import { Download, Share2, Camera, Upload, ArrowLeft, Sparkles } from "lucide-react"
+import { Download, Share2, Camera, ArrowLeft, Sparkles, Image as ImageIcon } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
 import imageCompression from "browser-image-compression"
@@ -107,7 +107,9 @@ export function PassViewer({ passId }: PassViewerProps) {
             },
             body: JSON.stringify({
               passId: attendeeData?.id,
-              photoData: base64Result
+              photoData: base64Result,
+              fileName: file.name,
+              fileType: file.type
             })
           })
           
@@ -286,9 +288,9 @@ export function PassViewer({ passId }: PassViewerProps) {
         <div className="max-w-md mx-auto space-y-6">
           {/* Welcome Message */}
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold">Welcome back, {firstName}.</h1>
-            <p className="text-muted-foreground">This is your Kairos Pass.</p>
-            <p className="text-sm font-medium text-green-600">You were meant to be here. 🔒</p>
+            <h1 className="text-3xl font-bold">Personalize Your Pass</h1>
+            <p className="text-muted-foreground">Upload your selfie to create a unique Kairos memory</p>
+            <p className="text-sm font-medium text-green-600">Make it yours, {firstName} ✨</p>
           </div>
 
           {/* Pass Design */}
@@ -407,13 +409,13 @@ export function PassViewer({ passId }: PassViewerProps) {
           </div>
 
           {/* Photo Upload Section */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Add a memory from your Kairos moment 📸</h3>
+              <h3 className="text-xl font-semibold mb-2">Upload Your Selfie 📸</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 {uploadedPhoto 
                   ? "Your photo will replace the QR code on your pass" 
-                  : "Upload a photo to replace the QR code on your pass"
+                  : "Take a selfie to personalize your Kairos pass"
                 }
               </p>
             </div>
@@ -422,22 +424,22 @@ export function PassViewer({ passId }: PassViewerProps) {
               <Button 
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline" 
-                className="flex-1"
+                className="flex-1 h-12 text-lg"
                 disabled={isUploading}
               >
                 {isUploading ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
                 ) : (
-                  <Upload className="mr-2 h-4 w-4" />
+                  <ImageIcon className="mr-2 h-5 w-5" />
                 )}
-                {uploadedPhoto ? 'Change Photo' : 'Upload Photo'}
+                {uploadedPhoto ? 'Change Photo' : 'Upload Selfie'}
               </Button>
               
               {uploadedPhoto && (
                 <Button 
                   onClick={() => setUploadedPhoto(null)}
                   variant="outline" 
-                  className="bg-red-50 hover:bg-red-100 text-red-600 border-red-200"
+                  className="bg-red-50 hover:bg-red-100 text-red-600 border-red-200 h-12"
                 >
                   Remove
                 </Button>
@@ -448,6 +450,7 @@ export function PassViewer({ passId }: PassViewerProps) {
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              capture="user"
               onChange={handlePhotoUpload}
               className="hidden"
             />
@@ -475,12 +478,12 @@ export function PassViewer({ passId }: PassViewerProps) {
 
           {/* Action Buttons */}
           <div className="flex space-x-3">
-            <Button onClick={downloadPass} className="flex-1 bg-green-600 hover:bg-green-700">
-              <Download className="mr-2 h-4 w-4" />
+            <Button onClick={downloadPass} className="flex-1 bg-green-600 hover:bg-green-700 h-12 text-lg">
+              <Download className="mr-2 h-5 w-5" />
               {uploadedPhoto ? 'Download Pass + Photo' : 'Download Pass'}
             </Button>
-            <Button onClick={sharePass} variant="outline" className="flex-1">
-              <Share2 className="mr-2 h-4 w-4" />
+            <Button onClick={sharePass} variant="outline" className="flex-1 h-12 text-lg">
+              <Share2 className="mr-2 h-5 w-5" />
               Share
             </Button>
           </div>
