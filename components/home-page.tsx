@@ -94,7 +94,7 @@ export function HomePage() {
                 <Calendar className="h-12 w-12 text-primary mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Divine Timing</h3>
                 <p className="text-muted-foreground">
-                  Experience God's perfect timing in your life journey and spiritual growth
+                  Experience God&apos;s perfect timing in your life journey and spiritual growth
                 </p>
               </CardContent>
             </Card>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,14 +13,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = createClient()
+    const cookieStore = cookies()
+    const supabase = createClient(cookieStore)
     
     // Convert base64 to buffer
     const base64Data = photoData.replace(/^data:image\/[a-z]+;base64,/, "")
     const buffer = Buffer.from(base64Data, 'base64')
     
     // Upload to Supabase storage
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('kairos-photos')
       .upload(`${passId}.jpg`, buffer, {
         contentType: 'image/jpeg',

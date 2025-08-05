@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useTicketing } from "@/contexts/ticketing-context"
@@ -188,7 +188,7 @@ export function TicketDisplay() {
               {/* Main Quote - Smaller */}
               <div className="absolute bottom-[110px] left-4 right-4 text-center">
                 <h2 className="poppins-extrabold italic text-white text-lg leading-tight">
-                  "{kairosQuote}"
+                  &ldquo;{kairosQuote}&rdquo;
                 </h2>
               </div>
 

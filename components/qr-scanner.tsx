@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,7 +16,13 @@ export function QRScanner() {
   const [isScanning, setIsScanning] = useState(false)
   const [scanResult, setScanResult] = useState<{
     success: boolean
-    attendee?: any
+    attendee?: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      verified: boolean;
+    }
     message: string
   } | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
@@ -37,30 +43,38 @@ export function QRScanner() {
     }
   }
 
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (stream) {
       stream.getTracks().forEach((track) => track.stop())
       setStream(null)
     }
     setIsScanning(false)
-  }
+  }, [stream])
 
   const simulateQRScan = () => {
     // Simulate scanning a QR code
-    const attendees = state.attendees
-    if (attendees.length > 0) {
-      const randomAttendee = attendees[Math.floor(Math.random() * attendees.length)]
-
-      if (randomAttendee.verified) {
+    if (state.currentAttendee) {
+      if (state.currentAttendee.verified) {
         setScanResult({
           success: false,
           message: "This pass has already been used for entry",
         })
       } else {
-        dispatch({ type: "VERIFY_ATTENDEE", payload: randomAttendee.id })
+        dispatch({ type: "VERIFY_ATTENDEE", payload: state.currentAttendee.id })
+        // Split fullName into firstName and lastName
+        const nameParts = state.currentAttendee.fullName.split(' ')
+        const firstName = nameParts[0] || ''
+        const lastName = nameParts.slice(1).join(' ') || ''
+        
         setScanResult({
           success: true,
-          attendee: randomAttendee,
+          attendee: {
+            id: state.currentAttendee.id,
+            firstName,
+            lastName,
+            email: state.currentAttendee.email,
+            verified: true
+          },
           message: "Valid entry confirmed",
         })
       }
@@ -83,7 +97,7 @@ export function QRScanner() {
     return () => {
       stopCamera()
     }
-  }, [])
+  }, [stopCamera])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
@@ -111,7 +125,7 @@ export function QRScanner() {
                 <Camera className="h-5 w-5" />
                 <span>Entry Verification</span>
               </CardTitle>
-              <CardDescription>Point camera at attendee's QR code</CardDescription>
+              <CardDescription>Point camera at attendee&apos;s QR code</CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-4">
@@ -163,7 +177,7 @@ export function QRScanner() {
                       <CardContent className="pt-6">
                         <div className="space-y-2">
                           <p className="font-medium text-green-800 dark:text-green-200">
-                            Welcome, {scanResult.attendee.fullName}!
+                            Welcome, {scanResult.attendee.firstName} {scanResult.attendee.lastName}!
                           </p>
                           <p className="text-sm text-green-600 dark:text-green-400">
                             Entry verified at {new Date().toLocaleTimeString()}
@@ -184,7 +198,7 @@ export function QRScanner() {
 
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
-              Total Verified: {state.attendees.filter((a) => a.verified).length} / {state.attendees.length}
+              {state.currentAttendee?.verified ? "Current pass verified" : "Ready to scan"}
             </p>
           </div>
         </div>

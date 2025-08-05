@@ -11,6 +11,7 @@ export interface AttendeeData {
   hearAbout: string
   timestamp: string
   passColor?: "dark-green" | "dark-purple" | "midnight-blue" | "deep-burgundy"
+  verified?: boolean
 }
 
 interface TicketingState {
@@ -22,6 +23,7 @@ type TicketingAction =
   | { type: "SET_CURRENT_ATTENDEE"; payload: AttendeeData }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "CLEAR_CURRENT_ATTENDEE" }
+  | { type: "VERIFY_ATTENDEE"; payload: string }
 
 const initialState: TicketingState = {
   currentAttendee: null,
@@ -36,6 +38,14 @@ const ticketingReducer = (state: TicketingState, action: TicketingAction): Ticke
       return { ...state, isLoading: action.payload }
     case "CLEAR_CURRENT_ATTENDEE":
       return { ...state, currentAttendee: null }
+    case "VERIFY_ATTENDEE":
+      if (state.currentAttendee && state.currentAttendee.id === action.payload) {
+        return {
+          ...state,
+          currentAttendee: { ...state.currentAttendee, verified: true }
+        }
+      }
+      return state
     default:
       return state
   }

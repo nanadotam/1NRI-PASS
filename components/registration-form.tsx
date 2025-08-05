@@ -11,7 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useTicketing } from "@/contexts/ticketing-context"
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
 

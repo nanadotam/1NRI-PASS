@@ -237,7 +237,7 @@ export function PassDisplay() {
               {/* Main Quote - Smaller */}
               <div className="absolute bottom-[150px] left-4 right-4 text-center">
                 <h2 className="poppins-extrabold italic text-white text-sm leading-tight">
-                  "{kairosQuote}"
+                  &ldquo;{kairosQuote}&rdquo;
                 </h2>
               </div>
 

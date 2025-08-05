@@ -11,11 +11,6 @@ import imageCompression from "browser-image-compression"
 
 const kairosQuote = "You didn't just show up. You aligned."
 
-const estherVerse = {
-  reference: "Esther 4:14",
-  text: "For if you remain silent at this time, relief and deliverance for the Jews will arise from another place, but you and your father's family will perish. And who knows but that you have come to your royal position for such a time as this?"
-}
-
 const colorOptions = [
   { id: "dark-green", name: "Dark Green", bg: "#182b11" },
   { id: "dark-purple", name: "Dark Purple", bg: "#2d1b69" },
@@ -40,7 +35,19 @@ export function PassViewer({ passId }: PassViewerProps) {
   const router = useRouter()
   const passRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [attendeeData, setAttendeeData] = useState<any>(null)
+  const [attendeeData, setAttendeeData] = useState<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone_number: string;
+    heard_about: string;
+    verse_reference: string;
+    verse_text: string;
+    message_text: string;
+    theme: string;
+    passColor?: string;
+  } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showFlicker, setShowFlicker] = useState(true)
   const [selectedColor, setSelectedColor] = useState<string>("dark-green")
@@ -87,31 +94,32 @@ export function PassViewer({ passId }: PassViewerProps) {
 
       // Convert to base64 for immediate display
       const reader = new FileReader()
-      reader.onload = (e) => {
-        setUploadedPhoto(e.target?.result as string)
+      reader.onload = async (e) => {
+        const base64Result = e.target?.result as string
+        setUploadedPhoto(base64Result)
+
+        // Upload to Supabase storage
+        try {
+          const uploadResponse = await fetch('/api/upload-photo', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              passId: attendeeData?.id,
+              photoData: base64Result
+            })
+          })
+          
+          const uploadData = await uploadResponse.json()
+          if (!uploadData.success) {
+            console.error("Failed to upload photo:", uploadData.error)
+          }
+        } catch (uploadError) {
+          console.error("Error uploading to Supabase:", uploadError)
+        }
       }
       reader.readAsDataURL(compressedFile)
-
-      // Upload to Supabase storage
-      try {
-        const uploadResponse = await fetch('/api/upload-photo', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            passId: attendeeData.id,
-            photoData: e.target?.result
-          })
-        })
-        
-        const uploadData = await uploadResponse.json()
-        if (!uploadData.success) {
-          console.error("Failed to upload photo:", uploadData.error)
-        }
-      } catch (uploadError) {
-        console.error("Error uploading to Supabase:", uploadError)
-      }
       
     } catch (error) {
       console.error("Error uploading photo:", error)
@@ -152,7 +160,7 @@ export function PassViewer({ passId }: PassViewerProps) {
       }
 
       const link = document.createElement("a")
-      link.download = `kairos-pass-${attendeeData?.fullName?.replace(/\s+/g, "-").toLowerCase()}.png`
+      link.download = `kairos-pass-${attendeeData?.first_name?.replace(/\s+/g, "-").toLowerCase()}.png`
       link.href = finalCanvas.toDataURL("image/png", 1.0)
       link.click()
     } catch (error) {
@@ -166,7 +174,7 @@ export function PassViewer({ passId }: PassViewerProps) {
         await navigator.share({
           title: "My Kairos Pass",
           text: `I'm attending Kairos: A 1NRI Experience! ${kairosQuote} #MyKairosPass`,
-          url: `${window.location.origin}/pass/${attendeeData.id}`,
+          url: `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.id}`,
         })
       } catch (error) {
         console.error("Error sharing:", error)
@@ -223,7 +231,7 @@ export function PassViewer({ passId }: PassViewerProps) {
 
   const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.id}`
   const colors = getPassColors(selectedColor)
-  const firstName = attendeeData.fullName?.split(' ')[0] || 'Attendee'
+  const firstName = attendeeData.first_name || 'Attendee'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -286,7 +294,7 @@ export function PassViewer({ passId }: PassViewerProps) {
               {/* Attendee Information - Left Side */}
               <div className="absolute bottom-[200px] left-4">
                 <h3 className="font-jetbrains-mono font-bold text-white text-sm mb-1 leading-tight">
-                  {attendeeData.fullName}
+                  {attendeeData.first_name} {attendeeData.last_name}
                 </h3>
                 <p className="font-jetbrains-mono italic text-white text-[10px] opacity-75">
                   Attendee Name
@@ -306,17 +314,17 @@ export function PassViewer({ passId }: PassViewerProps) {
               {/* Main Quote */}
               <div className="absolute bottom-[150px] left-4 right-4 text-center">
                 <h2 className="poppins-extrabold italic text-white text-sm leading-tight">
-                  "{kairosQuote}"
+                  &ldquo;{kairosQuote}&rdquo;
                 </h2>
               </div>
 
               {/* Bible Verse */}
               <div className="absolute bottom-[50px] left-4 right-4 text-center">
                 <p className="poppins-regular text-white text-[9px] mb-1 leading-relaxed opacity-95">
-                  {estherVerse.text}
+                  {attendeeData.verse_text}
                 </p>
                 <p className="font-jetbrains-mono italic text-white text-[8px] opacity-75">
-                  {estherVerse.reference}
+                  {attendeeData.verse_reference}
                 </p>
               </div>
 

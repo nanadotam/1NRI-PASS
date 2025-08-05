@@ -31,8 +31,6 @@ const bibleVerses = [
 ];
 
 // Kairos quote and Gen Z messages array
-const kairosQuote = "You didn't just show up. You aligned.";
-
 const genZMessages = [
   "You didn't just show up. You aligned. 🔥",
   "God knew. You came. It's giving divine timing. ✨",
@@ -100,7 +98,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)

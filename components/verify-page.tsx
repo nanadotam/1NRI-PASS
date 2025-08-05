@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Calendar, MapPin, User, Sparkles, ArrowLeft } from "lucide-react"
+import { CheckCircle, Calendar, MapPin, User, ArrowLeft } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
@@ -15,7 +15,19 @@ interface VerifyPageProps {
 
 export function VerifyPage({ passId }: VerifyPageProps) {
   const router = useRouter()
-  const [attendeeData, setAttendeeData] = useState<any>(null)
+  const [attendeeData, setAttendeeData] = useState<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone_number: string;
+    heard_about: string;
+    verse_reference: string;
+    verse_text: string;
+    message_text: string;
+    theme: string;
+    timestamp: string;
+  } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -128,7 +140,7 @@ export function VerifyPage({ passId }: VerifyPageProps) {
                 <div className="flex items-center justify-center space-x-3">
                   <User className="h-5 w-5 text-green-600" />
                   <div>
-                    <p className="font-bold text-lg text-gray-800">{attendeeData.fullName}</p>
+                    <p className="font-bold text-lg text-gray-800">{attendeeData.first_name} {attendeeData.last_name}</p>
                     <p className="text-green-600 text-sm">Verified Attendee</p>
                   </div>
                 </div>
@@ -138,10 +150,10 @@ export function VerifyPage({ passId }: VerifyPageProps) {
                     <strong>Email:</strong> {attendeeData.email}
                   </p>
                   <p className="text-sm">
-                    <strong>Phone:</strong> {attendeeData.phone}
+                    <strong>Phone:</strong> {attendeeData.phone_number}
                   </p>
                   <p className="text-sm">
-                    <strong>Heard about us:</strong> {attendeeData.hearAbout}
+                    <strong>Heard about us:</strong> {attendeeData.heard_about}
                   </p>
                 </div>
               </div>

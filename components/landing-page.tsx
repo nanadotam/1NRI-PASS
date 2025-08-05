@@ -47,7 +47,7 @@ export function LandingPage() {
                 <CardTitle>Divine Timing</CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription>Experience God's perfect timing in your life journey</CardDescription>
+                <CardDescription>Experience God&apos;s perfect timing in your life journey</CardDescription>
               </CardContent>
             </Card>
 

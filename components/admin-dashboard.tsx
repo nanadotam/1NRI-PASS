@@ -93,7 +93,7 @@ export function AdminDashboard() {
     window.URL.revokeObjectURL(url)
   }
 
-      const uniqueSources = [...new Set(attendees.map((a) => a.heard_about))]
+      const uniqueSources = Array.from(new Set(attendees.map((a) => a.heard_about)))
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
