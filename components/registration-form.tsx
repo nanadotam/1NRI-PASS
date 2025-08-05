@@ -16,10 +16,14 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
 
 const formSchema = z.object({
-  fullName: z.string().min(2, "Full name must be at least 2 characters"),
+  firstName: z.string().min(2, "First name must be at least 2 characters"),
+  lastName: z.string().min(1, "Last name is required"),
   phone: z.string().min(10, "Please enter a valid phone number"),
   email: z.string().email("Please enter a valid email address"),
   hearAbout: z.string().min(1, "Please select how you heard about Kairos"),
+  passColor: z.enum(["dark-green", "dark-purple"], {
+    required_error: "Please select a pass color",
+  }),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -33,6 +37,12 @@ const hearAboutOptions = [
   "I just knew ✨",
 ]
 
+const generateKairosId = (): string => {
+  // Generate a 4-digit random number
+  const randomNumber = Math.floor(1000 + Math.random() * 9000)
+  return `KAIROS-${randomNumber}`
+}
+
 export function RegistrationForm() {
   const router = useRouter()
   const { dispatch, submitToBackend } = useTicketing()
@@ -41,10 +51,12 @@ export function RegistrationForm() {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fullName: "",
+      firstName: "",
+      lastName: "",
       phone: "",
       email: "",
       hearAbout: "",
+      passColor: "dark-green",
     },
   })
 
@@ -53,8 +65,9 @@ export function RegistrationForm() {
 
     // Create attendee data
     const attendeeData = {
-      id: `kairos-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: generateKairosId(),
       ...data,
+      fullName: `${data.firstName} ${data.lastName}`, // For backward compatibility with context
       timestamp: new Date().toISOString(),
     }
 
@@ -110,19 +123,35 @@ export function RegistrationForm() {
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="fullName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your full name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>First Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your first name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your last name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <FormField
                     control={form.control}
@@ -170,6 +199,28 @@ export function RegistrationForm() {
                                 {option}
                               </SelectItem>
                             ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="passColor"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Select Pass Color</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a color" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="dark-green">Dark Green</SelectItem>
+                            <SelectItem value="dark-purple">Dark Purple</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

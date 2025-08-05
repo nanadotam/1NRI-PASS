@@ -1,54 +1,91 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { useTicketing } from "@/contexts/ticketing-context"
 import { QRCodeSVG } from "qrcode.react"
-import { Calendar, MapPin, User, Download, Share2 } from "lucide-react"
+import { Download, Share2 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 
-const bibleVerses = [
-  "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, to give you hope and a future. - Jeremiah 29:11",
-  "Trust in the Lord with all your heart and lean not on your own understanding. - Proverbs 3:5",
-  "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go. - Joshua 1:9",
-  "And we know that in all things God works for the good of those who love him. - Romans 8:28",
-  "I can do all this through him who gives me strength. - Philippians 4:13",
-]
+const kairosQuote = "You didn't just show up. You aligned."
 
-const genZAffirmations = [
-  "You're about to level up spiritually",
-  "God's timing hits different when you trust the process",
-  "Your faith journey is about to get an upgrade",
-  "Divine appointments are loading...",
-  "You're chosen for such a time as this",
-]
+const estherVerse = {
+  reference: "Esther 4:14",
+  text: "For if you remain silent at this time, relief and deliverance for the Jews will arise from another place, but you and your father's family will perish. And who knows but that you have come to your royal position for such a time as this?"
+}
+
+const getPassColors = (color: string) => {
+  switch (color) {
+    case "dark-purple":
+      return {
+        background: "#2d1b69", // Dark purple background
+        text: "#ffffff",
+        accent: "#6366f1"
+      }
+    case "dark-green":
+    default:
+      return {
+        background: "#182b11", // Dark green background from SVG
+        text: "#ffffff",
+        accent: "#22c55e"
+      }
+  }
+}
 
 export function TicketDisplay() {
   const router = useRouter()
   const { state } = useTicketing()
-  const [randomVerse, setRandomVerse] = useState("")
-  const [randomAffirmation, setRandomAffirmation] = useState("")
+  const ticketRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!state.currentAttendee) {
       router.push("/register")
       return
     }
-
-    setRandomVerse(bibleVerses[Math.floor(Math.random() * bibleVerses.length)])
-    setRandomAffirmation(genZAffirmations[Math.floor(Math.random() * genZAffirmations.length)])
   }, [state.currentAttendee, router])
+
+  const downloadTicket = async () => {
+    if (!ticketRef.current) return
+
+    try {
+      const html2canvas = (await import("html2canvas")).default
+      const canvas = await html2canvas(ticketRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        useCORS: true,
+      })
+
+      const link = document.createElement("a")
+      link.download = `kairos-ticket-${state.currentAttendee?.fullName.replace(/\s+/g, "-").toLowerCase()}.png`
+      link.href = canvas.toDataURL()
+      link.click()
+    } catch (error) {
+      console.error("Error downloading ticket:", error)
+    }
+  }
+
+  const shareTicket = async () => {
+    if (navigator.share && state.currentAttendee) {
+      try {
+        await navigator.share({
+          title: "My Kairos Ticket",
+          text: `I'm attending Kairos: A 1NRI Experience! ${kairosQuote}`,
+          url: `${window.location.origin}/verify/${state.currentAttendee.id}`,
+        })
+      } catch (error) {
+        console.error("Error sharing:", error)
+      }
+    }
+  }
 
   if (!state.currentAttendee) {
     return null
   }
 
   const { currentAttendee } = state
-  const eventDate = new Date("2024-03-15T18:00:00")
+  const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/verify/${currentAttendee.id}`
+  const colors = getPassColors(currentAttendee.passColor || "dark-green")
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
@@ -62,97 +99,90 @@ export function TicketDisplay() {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto space-y-6">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-2">Your Kairos Pass</h1>
-            <p className="text-muted-foreground">Save this pass for event entry</p>
+            <h1 className="text-2xl font-bold mb-2">Your Kairos Ticket</h1>
+            <p className="text-muted-foreground">Save this ticket for event entry</p>
           </div>
 
-          <Card className="border-2 bg-gradient-to-br from-card to-muted/20">
-            <CardHeader className="text-center pb-4">
-              <div className="space-y-2">
-                <Badge variant="secondary" className="text-xs">
-                  PREMIUM ACCESS
-                </Badge>
-                <h2 className="text-xl font-bold">Kairos: A 1NRI Experience</h2>
-                <p className="text-sm text-muted-foreground">{randomAffirmation}</p>
+          {/* Ticket Design - Based on SVG */}
+          <div ref={ticketRef} className="bg-white rounded-lg overflow-hidden shadow-2xl">
+            <div 
+              className="relative w-full h-[600px] p-6 text-white"
+              style={{ backgroundColor: colors.background }}
+            >
+              {/* Main Quote */}
+              <div className="text-center mb-8 mt-8">
+                <h2 className="poppins-extrabold italic text-4xl leading-tight">
+                  "{kairosQuote}"
+                </h2>
               </div>
-            </CardHeader>
 
-            <CardContent className="space-y-6">
-              <div className="flex justify-center">
+              {/* QR Code Section */}
+              <div className="flex justify-center mb-8">
                 <div className="bg-white p-4 rounded-lg">
-                  <QRCodeSVG
-                    value={JSON.stringify({
-                      id: currentAttendee.id,
-                      name: currentAttendee.fullName,
-                      event: "kairos-2024",
-                    })}
-                    size={200}
-                    level="H"
-                    includeMargin
+                  <QRCodeSVG 
+                    value={qrCodeUrl} 
+                    size={160} 
+                    level="H" 
+                    includeMargin 
+                    fgColor="#000000"
+                    bgColor="#ffffff"
                   />
                 </div>
               </div>
 
-              <Separator />
-
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">{currentAttendee.fullName}</p>
-                    <p className="text-sm text-muted-foreground">Attendee</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">
-                      {eventDate.toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {eventDate.toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                      })}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <MapPin className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">1NRI Event Center</p>
-                    <p className="text-sm text-muted-foreground">Check email for address</p>
-                  </div>
+              {/* Attendee Information */}
+              <div className="mb-8">
+                <div className="text-left">
+                  <h3 className="font-jetbrains-mono font-bold text-3xl mb-1">
+                    {currentAttendee.fullName}
+                  </h3>
+                  <p className="font-jetbrains-mono italic text-sm">
+                    Attendee Name
+                  </p>
                 </div>
               </div>
 
-              <Separator />
-
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <p className="text-sm italic text-center leading-relaxed">{randomVerse}</p>
+              {/* Pass ID */}
+              <div className="absolute top-6 right-6 text-right">
+                <h4 className="font-jetbrains-mono font-bold text-3xl mb-1">
+                  {currentAttendee.id}
+                </h4>
+                <p className="font-jetbrains-mono italic text-sm">
+                  PASS ID
+                </p>
               </div>
 
-              <div className="text-center space-y-2">
-                <p className="text-xs text-muted-foreground">Pass ID</p>
-                <p className="font-mono text-sm">{currentAttendee.id}</p>
+              {/* Bible Verse */}
+              <div className="absolute bottom-24 left-6 right-6">
+                <div className="text-center">
+                  <p className="poppins-regular text-sm mb-4 leading-relaxed">
+                    {estherVerse.text}
+                  </p>
+                  <p className="font-jetbrains-mono italic text-sm">
+                    {estherVerse.reference}
+                  </p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Footer */}
+              <div className="absolute bottom-6 left-6 right-6 flex justify-between items-center">
+                <div className="text-left">
+                  <span className="poppins-medium text-sm">Updated </span>
+                  <span className="poppins-bold text-sm">August 16, 2025</span>
+                </div>
+                <div className="text-right">
+                  <span className="poppins-medium text-sm">WWW.1NRI.STORE</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="flex space-x-3">
-            <Button variant="outline" className="flex-1 bg-transparent">
+            <Button onClick={downloadTicket} className="flex-1 bg-green-600 hover:bg-green-700">
               <Download className="mr-2 h-4 w-4" />
-              Save Pass
+              Save Ticket
             </Button>
-            <Button variant="outline" className="flex-1 bg-transparent">
+            <Button onClick={shareTicket} variant="outline" className="flex-1 bg-transparent">
               <Share2 className="mr-2 h-4 w-4" />
               Share
             </Button>

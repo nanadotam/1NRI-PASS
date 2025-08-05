@@ -2,8 +2,12 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 
-// Bible verses array
+// Bible verses array - including Esther 4:14
 const bibleVerses = [
+  {
+    reference: "Esther 4:14",
+    text: "For if you remain silent at this time, relief and deliverance for the Jews will arise from another place, but you and your father's family will perish. And who knows but that you have come to your royal position for such a time as this?"
+  },
   {
     reference: "Jeremiah 29:11",
     text: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, to give you hope and a future."
@@ -26,7 +30,9 @@ const bibleVerses = [
   }
 ];
 
-// Gen Z messages array
+// Kairos quote and Gen Z messages array
+const kairosQuote = "You didn't just show up. You aligned.";
+
 const genZMessages = [
   "You didn't just show up. You aligned. 🔥",
   "God knew. You came. It's giving divine timing. ✨",
@@ -52,26 +58,20 @@ export async function POST(request: NextRequest) {
     const randomVerse = bibleVerses[Math.floor(Math.random() * bibleVerses.length)];
     const randomMessage = genZMessages[Math.floor(Math.random() * genZMessages.length)];
 
-    // Parse fullName into first_name and last_name
-    const fullName = attendeeData.fullName || '';
-    const nameParts = fullName.trim().split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
-
     // Insert attendee data into Supabase with the correct schema
     const { data, error } = await supabase
       .from('kairos_passes')
       .insert([
         {
-          first_name: firstName,
-          last_name: lastName,
+          first_name: attendeeData.firstName,
+          last_name: attendeeData.lastName,
           email: attendeeData.email,
           phone_number: attendeeData.phone,
           heard_about: attendeeData.hearAbout,
           verse_reference: randomVerse.reference,
           verse_text: randomVerse.text,
           message_text: randomMessage,
-          theme: attendeeData.theme || 'dark-green'
+          theme: attendeeData.passColor || 'dark-green' // Updated to use passColor from form
         }
       ])
       .select()
@@ -84,8 +84,6 @@ export async function POST(request: NextRequest) {
         error: error.message 
       }, { status: 500 })
     }
-
-
 
     return NextResponse.json({
       success: true,
