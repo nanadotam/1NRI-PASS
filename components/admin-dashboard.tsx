@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,50 +8,78 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { useTicketing } from "@/contexts/ticketing-context"
 import { Search, Download, QrCode, Users, CheckCircle, Clock, Filter } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 
+interface AttendeeData {
+  id: string
+  first_name: string
+  last_name: string
+  email: string
+  phone_number: string
+  heard_about: string
+  verse_reference: string
+  verse_text: string
+  message_text: string
+  theme: string
+  created_at: string
+}
+
 export function AdminDashboard() {
   const router = useRouter()
-  const { state } = useTicketing()
+  const [attendees, setAttendees] = useState<AttendeeData[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterStatus, setFilterStatus] = useState("all")
   const [filterSource, setFilterSource] = useState("all")
 
-  const filteredAttendees = state.attendees.filter((attendee) => {
+  useEffect(() => {
+    const fetchAttendees = async () => {
+      try {
+        const response = await fetch("/api/attendees")
+        const result = await response.json()
+        if (result.success) {
+          setAttendees(result.data)
+        }
+      } catch (error) {
+        console.error("Error fetching attendees:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAttendees()
+  }, [])
+
+  const filteredAttendees = attendees.filter((attendee) => {
+    const fullName = `${attendee.first_name} ${attendee.last_name}`
     const matchesSearch =
-      attendee.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       attendee.email.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesStatus =
-      filterStatus === "all" ||
-      (filterStatus === "verified" && attendee.verified) ||
-      (filterStatus === "pending" && !attendee.verified)
+    const matchesSource = filterSource === "all" || attendee.heard_about === filterSource
 
-    const matchesSource = filterSource === "all" || attendee.hearAbout === filterSource
-
-    return matchesSearch && matchesStatus && matchesSource
+    return matchesSearch && matchesSource
   })
 
   const stats = {
-    total: state.attendees.length,
-    verified: state.attendees.filter((a) => a.verified).length,
-    pending: state.attendees.filter((a) => !a.verified).length,
+    total: attendees.length,
+    verified: attendees.length, // All registered attendees are considered verified
+    pending: 0,
   }
 
   const exportData = () => {
     const csvContent = [
-      ["Name", "Email", "Phone", "Source", "Status", "Registration Time", "Verified Time"].join(","),
+      ["Name", "Email", "Phone", "Source", "Theme", "Registration Time", "Verse", "Message"].join(","),
       ...filteredAttendees.map((attendee) =>
         [
-          attendee.fullName,
+          `${attendee.first_name} ${attendee.last_name}`,
           attendee.email,
-          attendee.phone,
-          attendee.hearAbout,
-          attendee.verified ? "Verified" : "Pending",
-          new Date(attendee.timestamp).toLocaleString(),
-          attendee.verifiedAt ? new Date(attendee.verifiedAt).toLocaleString() : "N/A",
+          attendee.phone_number,
+          attendee.heard_about,
+          attendee.theme,
+          new Date(attendee.created_at).toLocaleString(),
+          attendee.verse_reference,
+          attendee.message_text,
         ].join(","),
       ),
     ].join("\n")
@@ -65,7 +93,7 @@ export function AdminDashboard() {
     window.URL.revokeObjectURL(url)
   }
 
-  const uniqueSources = [...new Set(state.attendees.map((a) => a.hearAbout))]
+      const uniqueSources = [...new Set(attendees.map((a) => a.heard_about))]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
@@ -143,17 +171,6 @@ export function AdminDashboard() {
                 </div>
               </div>
 
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="verified">Verified</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                </SelectContent>
-              </Select>
-
               <Select value={filterSource} onValueChange={setFilterSource}>
                 <SelectTrigger className="w-full md:w-48">
                   <SelectValue placeholder="Filter by source" />
@@ -182,12 +199,18 @@ export function AdminDashboard() {
                     <TableHead>Name</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Source</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Theme</TableHead>
                     <TableHead>Registered</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAttendees.length === 0 ? (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        Loading attendees...
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredAttendees.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                         No attendees found matching your criteria
@@ -196,24 +219,23 @@ export function AdminDashboard() {
                   ) : (
                     filteredAttendees.map((attendee) => (
                       <TableRow key={attendee.id}>
-                        <TableCell className="font-medium">{attendee.fullName}</TableCell>
+                        <TableCell className="font-medium">{`${attendee.first_name} ${attendee.last_name}`}</TableCell>
                         <TableCell>
                           <div className="space-y-1">
                             <p className="text-sm">{attendee.email}</p>
-                            <p className="text-xs text-muted-foreground">{attendee.phone}</p>
+                            <p className="text-xs text-muted-foreground">{attendee.phone_number}</p>
                           </div>
                         </TableCell>
-                        <TableCell>{attendee.hearAbout}</TableCell>
+                        <TableCell>{attendee.heard_about}</TableCell>
                         <TableCell>
                           <Badge
-                            variant={attendee.verified ? "default" : "secondary"}
-                            className={attendee.verified ? "bg-green-500" : ""}
+                            variant="outline"
                           >
-                            {attendee.verified ? "Verified" : "Pending"}
+                            {attendee.theme}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {new Date(attendee.timestamp).toLocaleDateString()}
+                          {new Date(attendee.created_at).toLocaleDateString()}
                         </TableCell>
                       </TableRow>
                     ))

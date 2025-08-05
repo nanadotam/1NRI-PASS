@@ -13,9 +13,9 @@ export async function GET(
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
-    // Fetch attendee data from Supabase
+    // Fetch pass data from Supabase using the correct table name
     const { data, error } = await supabase
-      .from('attendees')
+      .from('kairos_passes')
       .select('*')
       .eq('id', passId)
       .single()
@@ -29,15 +29,21 @@ export async function GET(
       }, { status: 404 })
     }
 
-    // Transform the data to match the frontend expected format
+    // Transform the data to match the frontend expected format using correct field names
     const transformedData = {
       id: data.id,
-      fullName: data.full_name,
+      fullName: `${data.first_name} ${data.last_name}`,
+      firstName: data.first_name,
+      lastName: data.last_name,
       email: data.email,
-      phone: data.phone,
-      hearAbout: data.hear_about,
-      timestamp: data.timestamp,
-      passColor: data.pass_color,
+      phone: data.phone_number,
+      hearAbout: data.heard_about,
+      verseReference: data.verse_reference,
+      verseText: data.verse_text,
+      messageText: data.message_text,
+      theme: data.theme,
+      timestamp: data.created_at,
+      passColor: data.theme, // Using theme as pass color
       verified: true
     }
 

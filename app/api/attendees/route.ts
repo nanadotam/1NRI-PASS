@@ -2,6 +2,44 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 
+// Bible verses array
+const bibleVerses = [
+  {
+    reference: "Jeremiah 29:11",
+    text: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, to give you hope and a future."
+  },
+  {
+    reference: "Proverbs 3:5",
+    text: "Trust in the Lord with all your heart and lean not on your own understanding."
+  },
+  {
+    reference: "Joshua 1:9",
+    text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go."
+  },
+  {
+    reference: "Romans 8:28",
+    text: "And we know that in all things God works for the good of those who love him."
+  },
+  {
+    reference: "Philippians 4:13",
+    text: "I can do all this through him who gives me strength."
+  }
+];
+
+// Gen Z messages array
+const genZMessages = [
+  "You didn't just show up. You aligned. 🔥",
+  "God knew. You came. It's giving divine timing. ✨",
+  "Chosen. Anointed. On time. 💼⏳",
+  "This isn't random. This is Kairos. 🕊",
+  "You're not late. You're aligned. 💫",
+  "Holy Spirit said, 'pull up.' You obeyed. 👣🔥",
+  "Walking in purpose looks good on you. 💅🏾",
+  "The vibe is spiritual. The moment is now. 🧿",
+  "Kairos unlocked. You're the key. 🗝️",
+  "Heaven was waiting for you. 🫶🏾"
+];
+
 export async function POST(request: NextRequest) {
   try {
     const attendeeData = await request.json()
@@ -10,18 +48,30 @@ export async function POST(request: NextRequest) {
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
-    // Insert attendee data into Supabase
+    // Select random verse and message
+    const randomVerse = bibleVerses[Math.floor(Math.random() * bibleVerses.length)];
+    const randomMessage = genZMessages[Math.floor(Math.random() * genZMessages.length)];
+
+    // Parse fullName into first_name and last_name
+    const fullName = attendeeData.fullName || '';
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Insert attendee data into Supabase with the correct schema
     const { data, error } = await supabase
-      .from('attendees')
+      .from('kairos_passes')
       .insert([
         {
-          id: attendeeData.id,
-          full_name: attendeeData.fullName,
+          first_name: firstName,
+          last_name: lastName,
           email: attendeeData.email,
-          phone: attendeeData.phone,
-          hear_about: attendeeData.hearAbout,
-          timestamp: attendeeData.timestamp,
-          pass_color: attendeeData.passColor || 'green'
+          phone_number: attendeeData.phone,
+          heard_about: attendeeData.hearAbout,
+          verse_reference: randomVerse.reference,
+          verse_text: randomVerse.text,
+          message_text: randomMessage,
+          theme: attendeeData.theme || 'dark-green'
         }
       ])
       .select()
@@ -30,24 +80,23 @@ export async function POST(request: NextRequest) {
       console.error("Supabase error:", error)
       return NextResponse.json({ 
         success: false, 
-        message: "Failed to save attendee data",
+        message: "Failed to save pass data",
         error: error.message 
       }, { status: 500 })
     }
 
-    console.log("Successfully saved attendee data:", data)
+
 
     return NextResponse.json({
       success: true,
-      message: "Attendee data saved successfully",
-      id: attendeeData.id,
+      message: "Pass data saved successfully",
       data: data[0]
     })
   } catch (error) {
-    console.error("Error processing attendee data:", error)
+    console.error("Error processing pass data:", error)
     return NextResponse.json({ 
       success: false, 
-      message: "Failed to process attendee data",
+      message: "Failed to process pass data",
       error: error instanceof Error ? error.message : String(error)
     }, { status: 500 })
   }
@@ -59,15 +108,15 @@ export async function GET(request: NextRequest) {
     const supabase = createClient(cookieStore)
     
     const { data, error } = await supabase
-      .from('attendees')
+      .from('kairos_passes')
       .select('*')
-      .order('timestamp', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (error) {
       console.error("Supabase error:", error)
       return NextResponse.json({ 
         success: false, 
-        message: "Failed to fetch attendees",
+        message: "Failed to fetch passes",
         error: error.message 
       }, { status: 500 })
     }
@@ -77,10 +126,10 @@ export async function GET(request: NextRequest) {
       data: data
     })
   } catch (error) {
-    console.error("Error fetching attendees:", error)
+    console.error("Error fetching passes:", error)
     return NextResponse.json({ 
       success: false, 
-      message: "Failed to fetch attendees",
+      message: "Failed to fetch passes",
       error: error instanceof Error ? error.message : String(error)
     }, { status: 500 })
   }
