@@ -133,13 +133,52 @@ export function PassViewer({ passId }: PassViewerProps) {
 
     try {
       const html2canvas = (await import("html2canvas")).default
-      const canvas = await html2canvas(passRef.current, {
+      
+      // Create a temporary div to render the pass with photo
+      const tempDiv = document.createElement('div')
+      tempDiv.style.position = 'absolute'
+      tempDiv.style.left = '-9999px'
+      tempDiv.style.top = '-9999px'
+      tempDiv.style.width = '320px'
+      tempDiv.style.height = '568px'
+      tempDiv.style.backgroundColor = getPassColors(selectedColor).background
+      tempDiv.style.borderRadius = '16px'
+      tempDiv.style.overflow = 'hidden'
+      tempDiv.style.position = 'relative'
+      
+      // Clone the pass content
+      const passClone = passRef.current.cloneNode(true) as HTMLElement
+      tempDiv.appendChild(passClone)
+      document.body.appendChild(tempDiv)
+
+      // If there's an uploaded photo, replace the QR code with the photo
+      if (uploadedPhoto) {
+        const qrCodeArea = passClone.querySelector('.absolute.top-8') as HTMLElement
+        if (qrCodeArea) {
+          qrCodeArea.innerHTML = `
+            <div class="relative w-[170px] h-[170px] rounded-xl overflow-hidden bg-white p-3">
+              <img src="${uploadedPhoto}" alt="Uploaded photo" style="width: 170px; height: 170px; object-fit: cover; border-radius: 12px;" />
+              <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; border-radius: 12px;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </div>
+            </div>
+          `
+        }
+      }
+
+      const canvas = await html2canvas(tempDiv, {
         backgroundColor: "transparent",
         scale: 3.6,
         useCORS: true,
         allowTaint: true,
         foreignObjectRendering: true,
       })
+
+      // Clean up
+      document.body.removeChild(tempDiv)
 
       const finalCanvas = document.createElement('canvas')
       finalCanvas.width = 1080
@@ -263,16 +302,31 @@ export function PassViewer({ passId }: PassViewerProps) {
                 backgroundColor: colors.background 
               }}
             >
-              {/* QR Code Area - Top Section */}
+              {/* QR Code or Photo Area - Top Section */}
               <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-white p-3 rounded-2xl shadow-lg">
-                <QRCodeSVG 
-                  value={qrCodeUrl} 
-                  size={170} 
-                  level="H" 
-                  includeMargin={false}
-                  fgColor="#000000"
-                  bgColor="#ffffff"
-                />
+                {uploadedPhoto ? (
+                  <div className="relative w-[170px] h-[170px] rounded-xl overflow-hidden">
+                    <Image
+                      src={uploadedPhoto}
+                      alt="Uploaded photo"
+                      width={170}
+                      height={170}
+                      className="object-cover w-full h-full"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                      <Camera className="h-8 w-8 text-white drop-shadow-lg" />
+                    </div>
+                  </div>
+                ) : (
+                  <QRCodeSVG 
+                    value={qrCodeUrl} 
+                    size={170} 
+                    level="H" 
+                    includeMargin={false}
+                    fgColor="#000000"
+                    bgColor="#ffffff"
+                  />
+                )}
               </div>
 
               {/* Main Kairos Logo - Center */}
@@ -357,7 +411,10 @@ export function PassViewer({ passId }: PassViewerProps) {
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">Add a memory from your Kairos moment 📸</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Upload a photo to replace the QR code on your pass
+                {uploadedPhoto 
+                  ? "Your photo will replace the QR code on your pass" 
+                  : "Upload a photo to replace the QR code on your pass"
+                }
               </p>
             </div>
 
