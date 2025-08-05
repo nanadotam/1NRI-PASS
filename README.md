@@ -11,8 +11,11 @@ A modern, aesthetic, and data-collecting pass-generating React app built with Ne
 - 📊 **Data Collection**: Form-based attendee registration
 - 🔍 **QR Verification**: Pass verification system
 - 🌙 **Dark/Light Mode**: Theme support
-- 📤 **Social Sharing**: Easy sharing for social media
+- 📤 **Social Sharing**: Easy sharing for social media with #MyKairosPass hashtag
 - 💾 **Supabase Backend**: Real-time database integration
+- 🔮 **Digital Flicker Animation**: Engaging loading animation with personalized welcome
+- 📸 **Photo Upload**: Upload memories to replace QR code on passes
+- 🎨 **Pass Customization**: Multiple color themes for passes
 
 ## Tech Stack
 
@@ -61,7 +64,27 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 2. In the SQL Editor, run the schema from `database-schema.sql`
 3. This creates the `attendees` table with proper RLS policies
 
-### 4. Run the Development Server
+### 4. Supabase Storage Setup
+
+Create a storage bucket for photo uploads:
+
+1. Go to your Supabase dashboard
+2. Navigate to Storage
+3. Create a new bucket called `kairos-photos`
+4. Set the bucket to public
+5. Configure the following RLS policy for the bucket:
+
+```sql
+-- Allow public read access
+CREATE POLICY "Public read access" ON storage.objects
+FOR SELECT USING (bucket_id = 'kairos-photos');
+
+-- Allow authenticated users to upload
+CREATE POLICY "Authenticated users can upload" ON storage.objects
+FOR INSERT WITH CHECK (bucket_id = 'kairos-photos');
+```
+
+### 5. Run the Development Server
 
 ```bash
 npm run dev
@@ -111,18 +134,26 @@ kairos-pass/
 - Generated pass with QR code
 - Personalized Bible verses and Gen Z messages
 - Download and share functionality
+- Color customization options
+- Social media sharing with #MyKairosPass hashtag
 
-### 4. Verification (`/verify/[id]`)
+### 4. Pass Viewer (`/pass/[id]`)
+- Full-screen pass display when QR code is scanned
+- Digital flicker animation with personalized welcome
+- Photo upload functionality to replace QR code
+- Memory capture and sharing features
+
+### 5. Verification (`/verify/[id]`)
 - Public pass verification page
 - Displays attendee information
 - Confirms pass authenticity
 
-### 5. Admin Dashboard (`/admin`)
+### 6. Admin Dashboard (`/admin`)
 - Attendee management
 - Statistics and analytics
 - CSV export functionality
 
-### 6. QR Scanner (`/scanner`)
+### 7. QR Scanner (`/scanner`)
 - Camera-based QR code scanning
 - Entry verification for events
 - Real-time status updates
@@ -162,6 +193,7 @@ Replace the logos in `public/images/`:
 - `POST /api/attendees` - Create new attendee
 - `GET /api/attendees` - Get all attendees
 - `GET /api/verify/[id]` - Verify pass by ID
+- `POST /api/upload-photo` - Upload photo to Supabase storage
 
 ## Database Schema
 
