@@ -10,7 +10,7 @@ export interface AttendeeData {
   email: string
   hearAbout: string
   timestamp: string
-  passColor?: "green" | "dark-green" | "dark-purple"
+  passColor?: "dark-green" | "dark-purple" | "midnight-blue" | "deep-burgundy"
 }
 
 interface TicketingState {

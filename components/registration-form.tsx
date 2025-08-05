@@ -21,7 +21,7 @@ const formSchema = z.object({
   phone: z.string().min(10, "Please enter a valid phone number"),
   email: z.string().email("Please enter a valid email address"),
   hearAbout: z.string().min(1, "Please select how you heard about Kairos"),
-  passColor: z.enum(["dark-green", "dark-purple"], {
+  passColor: z.enum(["dark-green", "dark-purple", "midnight-blue", "deep-burgundy"], {
     required_error: "Please select a pass color",
   }),
 })
@@ -221,6 +221,8 @@ export function RegistrationForm() {
                           <SelectContent>
                             <SelectItem value="dark-green">Dark Green</SelectItem>
                             <SelectItem value="dark-purple">Dark Purple</SelectItem>
+                            <SelectItem value="midnight-blue">Midnight Blue</SelectItem>
+                            <SelectItem value="deep-burgundy">Deep Burgundy</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
