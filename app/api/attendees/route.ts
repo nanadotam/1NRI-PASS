@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
     const supabase = createClient(cookieStore)
 
     let query = supabase
-      .from('attendees')
+      .from('kairos_passes')
       .select('*')
 
     if (email) {
