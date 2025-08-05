@@ -26,10 +26,14 @@ export function LandingPage() {
             Premium Event Experience
           </Badge>
 
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-            Kairos
-            <span className="block text-primary">A 1NRI Experience</span>
-          </h1>
+          {/* Logo and subtitle with reduced spacing */}
+          <div className="flex flex-col items-center">
+            <span className="text-5xl md:text-7xl font-bold tracking-tight">Kairos</span>
+            {/* Reduce space between logo and subtitle by 25px (mt-1 is 4px, so use negative margin) */}
+            <span className="block text-primary text-2xl md:text-4xl font-bold" style={{ marginTop: '-21px' }}>
+              A 1NRI Experience
+            </span>
+          </div>
 
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Join us for an transformative spiritual journey. Experience divine timing, meaningful connections, and
@@ -68,11 +72,18 @@ export function LandingPage() {
             </Card>
           </div>
 
-          <div className="space-y-4">
-            <Button size="lg" className="text-lg px-8 py-6 rounded-full" onClick={() => router.push("/register")}>
+          {/* Centered CTA */}
+          <div className="flex flex-col items-center space-y-2">
+            <Button
+              size="lg"
+              className="text-lg px-8 py-6 rounded-full"
+              onClick={() => router.push("/register")}
+            >
               Get Your Kairos Pass
             </Button>
-            <p className="text-sm text-muted-foreground">Secure your spot for this exclusive experience</p>
+            <p className="text-sm text-muted-foreground text-center">
+              Secure your spot for this exclusive experience
+            </p>
           </div>
         </div>
       </main>
