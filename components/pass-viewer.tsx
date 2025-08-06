@@ -10,6 +10,7 @@ import Image from "next/image"
 import imageCompression from "browser-image-compression"
 import { useTheme } from "next-themes"
 import { bibleVerses, genZAffirmations } from "@/components/pass-display"
+import { toBase64, generateQRCodeSVG } from "@/lib/utils"
 
 const colorOptions = [
   { id: "dark-green", name: "Dark Green", bg: "#182b11" },
@@ -178,137 +179,277 @@ export function PassViewer({ passId }: PassViewerProps) {
   const displayPhoto = uploadedPhoto || storedPhotoUrl
 
   const downloadPass = async () => {
-    if (!passRef.current) return
+    if (!attendeeData) return
 
     try {
-      const html2canvas = (await import("html2canvas")).default
+      console.log('🚀 Starting Puppeteer export...')
       
-      console.log('🔍 Starting download process...')
-      console.log('📱 Pass element:', passRef.current)
-      console.log('🖼️ Display photo:', displayPhoto)
-      
-      // Wait for any images to load
+      // Get the QR code SVG
+      const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.passId || attendeeData.id}`
+      const qrCodeSVG = generateQRCodeSVG(qrCodeUrl, 170)
+
+      // Prepare the photo (if exists)
+      let photoHtml = qrCodeSVG
       if (displayPhoto) {
-        console.log('⏳ Waiting for photo to load...')
-        await new Promise((resolve) => {
-          const img = new window.Image()
-          img.onload = () => {
-            console.log('✅ Photo loaded successfully')
-            resolve(null)
-          }
-          img.onerror = () => {
-            console.log('❌ Photo failed to load')
-            resolve(null)
-          }
-          img.src = displayPhoto
-        })
+        photoHtml = `<div style="background: white; padding: 24px; border-radius: 48px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+          <div style="width: 510px; height: 510px; border-radius: 36px; overflow: hidden;">
+            <img src="${displayPhoto}" alt="Uploaded photo" style="width: 510px; height: 510px; object-fit: cover; border-radius: 36px;" />
+          </div>
+        </div>`
+      } else {
+        // QR code with white background
+        photoHtml = `<div style="background: white; padding: 24px; border-radius: 48px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+          <div style="width: 510px; height: 510px; border-radius: 36px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: white;">
+            ${qrCodeSVG}
+          </div>
+        </div>`
       }
 
-      // Capture the pass directly from the DOM
-      console.log('📸 Capturing pass with html2canvas...')
-      const canvas = await html2canvas(passRef.current, {
-        backgroundColor: getPassColors(selectedColor).background,
-        scale: 3.6,
-        useCORS: true,
-        allowTaint: true,
-        foreignObjectRendering: true,
-        logging: true, // Enable logging for debugging
-        imageTimeout: 15000,
-        onclone: (clonedDoc) => {
-          console.log('🔄 Cloning document...')
-          // Ensure the photo is properly rendered in the cloned document
-          if (displayPhoto) {
-            const clonedQrArea = clonedDoc.querySelector('.absolute.top-8.left-1\\/2.transform.-translate-x-1\\/2') as HTMLElement
-            console.log('🎯 Found QR area:', clonedQrArea)
-            if (clonedQrArea) {
-              // Replace the QR code with the photo
-              const photoHtml = `
-                <div class="bg-white p-3 rounded-2xl shadow-lg">
-                  <div class="relative w-[170px] h-[170px] rounded-xl overflow-hidden">
-                    <img src="${displayPhoto}" alt="Uploaded photo" style="width: 170px; height: 170px; object-fit: cover; border-radius: 12px;" crossOrigin="anonymous" />
-                  </div>
-                </div>
-              `
-              clonedQrArea.innerHTML = photoHtml
-              console.log('🖼️ Replaced QR with photo')
+      // Get the logo based on theme
+      const logoSrc = resolvedTheme === "light" 
+        ? "/images/1NRI Logo - Black.png" 
+        : "/images/1NRI Logo - Fixed - Transparent (1).png"
+
+      // Create the HTML for the pass
+      const passHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Kairos Pass</title>
+            <style>
+              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
               
-              // Force the image to load
-              const img = clonedQrArea.querySelector('img') as HTMLImageElement
-              if (img) {
-                img.crossOrigin = 'anonymous'
-                img.onload = () => console.log('✅ Photo loaded in cloned document')
-                img.onerror = () => console.warn('❌ Failed to load photo in cloned document')
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
               }
-            }
-          }
-        }
+              
+              body {
+                font-family: 'Inter', sans-serif;
+                background: ${getPassColors(selectedColor).background};
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                color: white;
+              }
+              
+              .pass-container {
+                width: 1080px;
+                height: 1920px;
+                background: ${getPassColors(selectedColor).background};
+                border-radius: 48px;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 60px 120px rgba(0,0,0,0.3);
+              }
+              
+              .qr-area {
+                position: absolute;
+                top: 96px;
+                left: 50%;
+                transform: translateX(-50%);
+              }
+              
+              .logo-area {
+                position: absolute;
+                top: 570px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 100%;
+                padding: 0 48px;
+                text-align: center;
+              }
+              
+              .attendee-info {
+                position: absolute;
+                bottom: 600px;
+                left: 48px;
+              }
+              
+              .pass-id {
+                position: absolute;
+                bottom: 600px;
+                right: 48px;
+                text-align: right;
+              }
+              
+              .quote-area {
+                position: absolute;
+                bottom: 450px;
+                left: 48px;
+                right: 48px;
+                text-align: center;
+              }
+              
+              .verse-area {
+                position: absolute;
+                bottom: 150px;
+                left: 48px;
+                right: 48px;
+                text-align: center;
+              }
+              
+              .footer {
+                position: absolute;
+                bottom: 24px;
+                left: 48px;
+                right: 48px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              }
+              
+              .nri-logo {
+                position: absolute;
+                top: 24px;
+                left: 24px;
+                opacity: 0.6;
+              }
+              
+              .attendee-name {
+                font-weight: bold;
+                font-size: 42px;
+                margin-bottom: 12px;
+                line-height: 1.2;
+              }
+              
+              .attendee-label {
+                font-style: italic;
+                font-size: 30px;
+                opacity: 0.75;
+              }
+              
+              .pass-id-text {
+                font-weight: bold;
+                font-size: 36px;
+                margin-bottom: 12px;
+                line-height: 1.2;
+              }
+              
+              .pass-id-label {
+                font-style: italic;
+                font-size: 30px;
+                opacity: 0.75;
+              }
+              
+              .quote-text {
+                font-weight: 800;
+                font-style: italic;
+                font-size: 42px;
+                line-height: 1.2;
+              }
+              
+              .verse-text {
+                font-size: 27px;
+                margin-bottom: 12px;
+                line-height: 1.4;
+                opacity: 0.95;
+              }
+              
+              .verse-reference {
+                font-family: 'Courier New', monospace;
+                font-style: italic;
+                font-size: 24px;
+                opacity: 0.75;
+              }
+              
+              .footer-text {
+                font-size: 24px;
+                opacity: 0.7;
+              }
+              
+              .footer-bold {
+                font-weight: bold;
+                font-size: 24px;
+                opacity: 0.9;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="pass-container">
+              <div class="qr-area">
+                ${photoHtml}
+              </div>
+              
+              <div class="logo-area">
+                <img src="/images/kairos_PNG_UHD.png" alt="Kairos Logo" width="720" height="360" style="object-fit: contain; filter: drop-shadow(0 24px 48px rgba(0,0,0,0.4));" />
+              </div>
+              
+              <div class="attendee-info">
+                <div class="attendee-name">${attendeeData.firstName || attendeeData.first_name} ${attendeeData.lastName || attendeeData.last_name}</div>
+                <div class="attendee-label">Attendee Name</div>
+              </div>
+              
+              <div class="pass-id">
+                <div class="pass-id-text">${attendeeData.passId || attendeeData.id}</div>
+                <div class="pass-id-label">PASS ID</div>
+              </div>
+              
+              <div class="quote-area">
+                <div class="quote-text">"${attendeeData.message_text}"</div>
+              </div>
+              
+              <div class="verse-area">
+                <div class="verse-text">${attendeeData.verse_text}</div>
+                <div class="verse-reference">${attendeeData.verse_reference}</div>
+              </div>
+              
+              <div class="footer">
+                <div>
+                  <span class="footer-text">Updated </span>
+                  <span class="footer-bold">August 16, 2025</span>
+                </div>
+                <div>
+                  <span class="footer-text">WWW.1NRI.STORE</span>
+                </div>
+              </div>
+              
+              <div class="nri-logo">
+                <img src="/images/1NRI Logo - Fixed - Transparent (1).png" alt="1NRI Logo" width="60" height="60" style="object-fit: contain;" />
+              </div>
+            </div>
+          </body>
+        </html>
+      `
+
+      console.log('📝 Generated HTML for pass')
+
+      // Send to the API
+      const response = await fetch('/api/export-pass', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          html: passHtml,
+          width: 1080,
+          height: 1920
+        }),
       })
 
-      console.log('📊 Canvas dimensions:', canvas.width, 'x', canvas.height)
-      console.log('🎨 Canvas data URL length:', canvas.toDataURL().length)
-
-      // Create final canvas with exact dimensions
-      const finalCanvas = document.createElement('canvas')
-      finalCanvas.width = 1080
-      finalCanvas.height = 1920
-      const ctx = finalCanvas.getContext('2d')
-      
-      if (ctx) {
-        // Fill background
-        ctx.fillStyle = getPassColors(selectedColor).background
-        ctx.fillRect(0, 0, 1080, 1920)
-        
-        // Calculate scaling to fit the content properly
-        const scale = Math.min(1080 / canvas.width, 1920 / canvas.height)
-        const scaledWidth = canvas.width * scale
-        const scaledHeight = canvas.height * scale
-        const x = (1080 - scaledWidth) / 2
-        const y = (1920 - scaledHeight) / 2
-        
-        console.log('📏 Scaling info:', { scale, scaledWidth, scaledHeight, x, y })
-        
-        // Draw the captured content
-        ctx.drawImage(canvas, x, y, scaledWidth, scaledHeight)
-        
-        // Debug: Let's also try without the background fill to see if that's the issue
-        console.log('🔍 Testing without background fill...')
-        const testCanvas = document.createElement('canvas')
-        testCanvas.width = 1080
-        testCanvas.height = 1920
-        const testCtx = testCanvas.getContext('2d')
-        if (testCtx) {
-          testCtx.drawImage(canvas, x, y, scaledWidth, scaledHeight)
-          console.log('🧪 Test canvas data URL length:', testCanvas.toDataURL().length)
-        }
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status}`)
       }
 
-      const link = document.createElement("a")
-      link.download = `kairos-pass-${attendeeData?.first_name?.replace(/\s+/g, "-").toLowerCase()}.png`
-      link.href = finalCanvas.toDataURL("image/png", 1.0)
-      console.log('💾 Downloading file:', link.download)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `kairos-pass-${attendeeData.first_name?.replace(/\s+/g, "-").toLowerCase()}.png`
+      document.body.appendChild(link)
       link.click()
-      
-      // Also try a direct capture without any processing
-      console.log('🔄 Trying direct capture...')
-      try {
-        const directCanvas = await html2canvas(passRef.current, {
-          backgroundColor: null,
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          logging: true
-        })
-        
-        const directLink = document.createElement("a")
-        directLink.download = `kairos-pass-direct-${attendeeData?.first_name?.replace(/\s+/g, "-").toLowerCase()}.png`
-        directLink.href = directCanvas.toDataURL("image/png", 1.0)
-        console.log('💾 Downloading direct capture:', directLink.download)
-        directLink.click()
-      } catch (directError) {
-        console.error('❌ Direct capture failed:', directError)
-      }
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      console.log('✅ Pass exported successfully')
+
     } catch (error) {
-      console.error("❌ Error downloading pass:", error)
+      console.error("❌ Error exporting pass:", error)
     }
   }
 
@@ -361,7 +502,7 @@ export function PassViewer({ passId }: PassViewerProps) {
             <Sparkles className="h-16 w-16 mx-auto mb-4 text-green-400" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold animate-pulse">Decrypting Kairos Pass...</h1>
+            <h1 className="text-2xl font-bold animate-pulse">Decrypting Your Kairos Pass...</h1>
             <div className="flex space-x-1 justify-center">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce"></div>
               <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
