@@ -40,6 +40,7 @@ export async function GET(
       phone: data.phone_number,
       hearAbout: data.heard_about,
       verseReference: data.verse_reference,
+      verse_reference: data.verse_reference, // Keep original field name for frontend compatibility
       verse_text: data.verse_text, // Keep original field name for frontend compatibility
       message_text: data.message_text, // Keep original field name for frontend compatibility
       theme: data.theme,

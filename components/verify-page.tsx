@@ -157,6 +157,27 @@ export function VerifyPage({ passId }: VerifyPageProps) {
                     <strong>Heard about us:</strong> {attendeeData.heard_about}
                   </p>
                 </div>
+
+                {/* Bible Verse and Message */}
+                <div className="border-t pt-4 space-y-3">
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-800 mb-2">
+                      <strong>Your Kairos Message:</strong>
+                    </p>
+                    <p className="text-sm italic text-gray-700 mb-3">
+                      "{attendeeData.message_text}"
+                    </p>
+                    <p className="text-xs text-gray-600 mb-1">
+                      <strong>Bible Verse:</strong>
+                    </p>
+                    <p className="text-xs text-gray-700 mb-1">
+                      {attendeeData.verse_text}
+                    </p>
+                    <p className="text-xs text-gray-500 font-mono">
+                      {attendeeData.verse_reference}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Event Details */}
