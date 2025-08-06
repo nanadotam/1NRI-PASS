@@ -183,70 +183,132 @@ export function PassViewer({ passId }: PassViewerProps) {
     try {
       const html2canvas = (await import("html2canvas")).default
       
-      // Create a temporary div to render the pass with photo
-      const tempDiv = document.createElement('div')
-      tempDiv.style.position = 'absolute'
-      tempDiv.style.left = '-9999px'
-      tempDiv.style.top = '-9999px'
-      tempDiv.style.width = '320px'
-      tempDiv.style.height = '568px'
-      tempDiv.style.backgroundColor = getPassColors(selectedColor).background
-      tempDiv.style.borderRadius = '16px'
-      tempDiv.style.overflow = 'hidden'
-      tempDiv.style.position = 'relative'
+      console.log('🔍 Starting download process...')
+      console.log('📱 Pass element:', passRef.current)
+      console.log('🖼️ Display photo:', displayPhoto)
       
-      // Clone the pass content
-      const passClone = passRef.current.cloneNode(true) as HTMLElement
-      tempDiv.appendChild(passClone)
-      document.body.appendChild(tempDiv)
-
-      // If there's a photo, replace the QR code with the photo
+      // Wait for any images to load
       if (displayPhoto) {
-        const qrCodeArea = passClone.querySelector('.absolute.top-8') as HTMLElement
-        if (qrCodeArea) {
-          qrCodeArea.innerHTML = `
-            <div class="relative w-[170px] h-[170px] rounded-xl overflow-hidden bg-white p-3">
-              <img src="${displayPhoto}" alt="Uploaded photo" style="width: 170px; height: 170px; object-fit: cover; border-radius: 12px;" />
-            </div>
-          `
-        }
+        console.log('⏳ Waiting for photo to load...')
+        await new Promise((resolve) => {
+          const img = new window.Image()
+          img.onload = () => {
+            console.log('✅ Photo loaded successfully')
+            resolve(null)
+          }
+          img.onerror = () => {
+            console.log('❌ Photo failed to load')
+            resolve(null)
+          }
+          img.src = displayPhoto
+        })
       }
 
-      const canvas = await html2canvas(tempDiv, {
-        backgroundColor: "transparent",
+      // Capture the pass directly from the DOM
+      console.log('📸 Capturing pass with html2canvas...')
+      const canvas = await html2canvas(passRef.current, {
+        backgroundColor: getPassColors(selectedColor).background,
         scale: 3.6,
         useCORS: true,
         allowTaint: true,
         foreignObjectRendering: true,
+        logging: true, // Enable logging for debugging
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          console.log('🔄 Cloning document...')
+          // Ensure the photo is properly rendered in the cloned document
+          if (displayPhoto) {
+            const clonedQrArea = clonedDoc.querySelector('.absolute.top-8.left-1\\/2.transform.-translate-x-1\\/2') as HTMLElement
+            console.log('🎯 Found QR area:', clonedQrArea)
+            if (clonedQrArea) {
+              // Replace the QR code with the photo
+              const photoHtml = `
+                <div class="bg-white p-3 rounded-2xl shadow-lg">
+                  <div class="relative w-[170px] h-[170px] rounded-xl overflow-hidden">
+                    <img src="${displayPhoto}" alt="Uploaded photo" style="width: 170px; height: 170px; object-fit: cover; border-radius: 12px;" crossOrigin="anonymous" />
+                  </div>
+                </div>
+              `
+              clonedQrArea.innerHTML = photoHtml
+              console.log('🖼️ Replaced QR with photo')
+              
+              // Force the image to load
+              const img = clonedQrArea.querySelector('img') as HTMLImageElement
+              if (img) {
+                img.crossOrigin = 'anonymous'
+                img.onload = () => console.log('✅ Photo loaded in cloned document')
+                img.onerror = () => console.warn('❌ Failed to load photo in cloned document')
+              }
+            }
+          }
+        }
       })
 
-      // Clean up
-      document.body.removeChild(tempDiv)
+      console.log('📊 Canvas dimensions:', canvas.width, 'x', canvas.height)
+      console.log('🎨 Canvas data URL length:', canvas.toDataURL().length)
 
+      // Create final canvas with exact dimensions
       const finalCanvas = document.createElement('canvas')
       finalCanvas.width = 1080
       finalCanvas.height = 1920
       const ctx = finalCanvas.getContext('2d')
       
       if (ctx) {
+        // Fill background
         ctx.fillStyle = getPassColors(selectedColor).background
         ctx.fillRect(0, 0, 1080, 1920)
         
+        // Calculate scaling to fit the content properly
         const scale = Math.min(1080 / canvas.width, 1920 / canvas.height)
         const scaledWidth = canvas.width * scale
         const scaledHeight = canvas.height * scale
         const x = (1080 - scaledWidth) / 2
         const y = (1920 - scaledHeight) / 2
         
+        console.log('📏 Scaling info:', { scale, scaledWidth, scaledHeight, x, y })
+        
+        // Draw the captured content
         ctx.drawImage(canvas, x, y, scaledWidth, scaledHeight)
+        
+        // Debug: Let's also try without the background fill to see if that's the issue
+        console.log('🔍 Testing without background fill...')
+        const testCanvas = document.createElement('canvas')
+        testCanvas.width = 1080
+        testCanvas.height = 1920
+        const testCtx = testCanvas.getContext('2d')
+        if (testCtx) {
+          testCtx.drawImage(canvas, x, y, scaledWidth, scaledHeight)
+          console.log('🧪 Test canvas data URL length:', testCanvas.toDataURL().length)
+        }
       }
 
       const link = document.createElement("a")
       link.download = `kairos-pass-${attendeeData?.first_name?.replace(/\s+/g, "-").toLowerCase()}.png`
       link.href = finalCanvas.toDataURL("image/png", 1.0)
+      console.log('💾 Downloading file:', link.download)
       link.click()
+      
+      // Also try a direct capture without any processing
+      console.log('🔄 Trying direct capture...')
+      try {
+        const directCanvas = await html2canvas(passRef.current, {
+          backgroundColor: null,
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: true
+        })
+        
+        const directLink = document.createElement("a")
+        directLink.download = `kairos-pass-direct-${attendeeData?.first_name?.replace(/\s+/g, "-").toLowerCase()}.png`
+        directLink.href = directCanvas.toDataURL("image/png", 1.0)
+        console.log('💾 Downloading direct capture:', directLink.download)
+        directLink.click()
+      } catch (directError) {
+        console.error('❌ Direct capture failed:', directError)
+      }
     } catch (error) {
-      console.error("Error downloading pass:", error)
+      console.error("❌ Error downloading pass:", error)
     }
   }
 
@@ -389,12 +451,13 @@ export function PassViewer({ passId }: PassViewerProps) {
               <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-white p-3 rounded-2xl shadow-lg">
                 {displayPhoto ? (
                   <div className="relative w-[170px] h-[170px] rounded-xl overflow-hidden">
-                    <Image
+                    <img
                       src={displayPhoto}
                       alt="Uploaded photo"
                       width={170}
                       height={170}
                       className="object-cover w-full h-full"
+                      crossOrigin="anonymous"
                     />
                   </div>
                 ) : (
@@ -412,7 +475,7 @@ export function PassViewer({ passId }: PassViewerProps) {
               {/* Main Kairos Logo - Center */}
               <div className="absolute top-[190px] left-1/2 transform -translate-x-1/2 w-full px-4">
                 <div className="flex justify-center items-center">
-                  <Image
+                  <img
                     src="/images/kairos_PNG_UHD.png"
                     alt="Kairos Logo"
                     width={240}
@@ -421,6 +484,7 @@ export function PassViewer({ passId }: PassViewerProps) {
                     style={{
                       filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))'
                     }}
+                    crossOrigin="anonymous"
                   />
                 </div>
               </div>
@@ -454,11 +518,9 @@ export function PassViewer({ passId }: PassViewerProps) {
 
               {/* Bible Verse from Database */}
               <div className="absolute bottom-[50px] left-4 right-4 text-center">
-                <div className="absolute bottom-[25px] left-4 right-4 text-center">
-                  <p className="poppins-regular text-white text-[9px] mb-1 leading-relaxed opacity-95">
-                    {attendeeData.verse_text}
-                  </p>
-                </div>
+                <p className="poppins-regular text-white text-[9px] mb-1 leading-relaxed opacity-95">
+                  {attendeeData.verse_text}
+                </p>
                 <p className="font-jetbrains-mono italic text-white text-[8px] opacity-75">
                   {attendeeData.verse_reference}
                 </p>
@@ -477,12 +539,13 @@ export function PassViewer({ passId }: PassViewerProps) {
 
               {/* 1NRI Logo - Top Left */}
               <div className="absolute top-2 left-2">
-                <Image
+                <img
                   src={logoSrc}
                   alt="1NRI Logo"
                   width={20}
                   height={20}
                   className="object-contain opacity-60"
+                  crossOrigin="anonymous"
                 />
               </div>
             </div>
