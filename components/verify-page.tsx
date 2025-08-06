@@ -165,7 +165,7 @@ export function VerifyPage({ passId }: VerifyPageProps) {
                       <strong>Your Kairos Message:</strong>
                     </p>
                     <p className="text-sm italic text-gray-700 mb-3">
-                      "{attendeeData.message_text}"
+                      &ldquo;{attendeeData.message_text}&rdquo;
                     </p>
                     <p className="text-xs text-gray-600 mb-1">
                       <strong>Bible Verse:</strong>

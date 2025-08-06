@@ -4,13 +4,11 @@ import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { QRCodeSVG } from "qrcode.react"
-import { Download, Share2, Camera, ArrowLeft, Sparkles, Image as ImageIcon, Palette } from "lucide-react"
+import { Download, Share2, ArrowLeft, Sparkles, Image as ImageIcon, Palette } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
 import imageCompression from "browser-image-compression"
 import { useTheme } from "next-themes"
-import { bibleVerses, genZAffirmations } from "@/components/pass-display"
-import { toBase64, generateQRCodeSVG } from "@/lib/utils"
 
 const colorOptions = [
   { id: "dark-green", name: "Dark Green", bg: "#182b11" },
@@ -64,12 +62,6 @@ export function PassViewer({ passId }: PassViewerProps) {
 
   // Use theme hook inside the component
   const { resolvedTheme } = useTheme()
-
-  // Choose logo based on theme
-  const logoSrc =
-    resolvedTheme === "light"
-      ? "/images/1NRI Logo - Black.png"
-      : "/images/1NRI Logo - Fixed - Transparent (1).png"
 
   // Function to fetch stored photo from Supabase
   const fetchStoredPhoto = async (passId: string) => {
@@ -185,8 +177,10 @@ export function PassViewer({ passId }: PassViewerProps) {
       console.log('🚀 Starting Puppeteer export...')
       
       // Get the QR code SVG
-      const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.passId || attendeeData.id}`
-      const qrCodeSVG = generateQRCodeSVG(qrCodeUrl, 170)
+      const qrCodeSVG = `<svg width="170" height="170" viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+        <rect width="170" height="170" fill="white"/>
+        <text x="85" y="85" text-anchor="middle" dy=".3em" font-family="Arial" font-size="12" fill="black">QR Code</text>
+      </svg>`
 
       // Prepare the photo (if exists)
       let photoHtml = qrCodeSVG
@@ -204,11 +198,6 @@ export function PassViewer({ passId }: PassViewerProps) {
           </div>
         </div>`
       }
-
-      // Get the logo based on theme
-      const logoSrc = resolvedTheme === "light" 
-        ? "/images/1NRI Logo - Black.png" 
-        : "/images/1NRI Logo - Fixed - Transparent (1).png"
 
       // Create the HTML for the pass
       const passHtml = `
@@ -517,8 +506,6 @@ export function PassViewer({ passId }: PassViewerProps) {
   const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.passId || attendeeData.id}`
   const colors = getPassColors(selectedColor)
   const firstName = attendeeData.firstName || attendeeData.first_name || 'Attendee'
-  const lastName = attendeeData.lastName || attendeeData.last_name || ''
-  const fullName = `${firstName} ${lastName}`.trim() || 'Attendee'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -592,7 +579,7 @@ export function PassViewer({ passId }: PassViewerProps) {
               <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-white p-3 rounded-2xl shadow-lg">
                 {displayPhoto ? (
                   <div className="relative w-[170px] h-[170px] rounded-xl overflow-hidden">
-                    <img
+                    <Image
                       src={displayPhoto}
                       alt="Uploaded photo"
                       width={170}
@@ -616,7 +603,7 @@ export function PassViewer({ passId }: PassViewerProps) {
               {/* Main Kairos Logo - Center */}
               <div className="absolute top-[190px] left-1/2 transform -translate-x-1/2 w-full px-4">
                 <div className="flex justify-center items-center">
-                  <img
+                  <Image
                     src="/images/kairos_PNG_UHD.png"
                     alt="Kairos Logo"
                     width={240}
@@ -680,8 +667,8 @@ export function PassViewer({ passId }: PassViewerProps) {
 
               {/* 1NRI Logo - Top Left */}
               <div className="absolute top-2 left-2">
-                <img
-                  src={logoSrc}
+                <Image
+                  src={resolvedTheme === "light" ? "/images/1NRI Logo - Black.png" : "/images/1NRI Logo - Fixed - Transparent (1).png"}
                   alt="1NRI Logo"
                   width={20}
                   height={20}

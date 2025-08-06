@@ -4,7 +4,7 @@ import { cookies } from "next/headers"
 
 export async function POST(request: NextRequest) {
   try {
-    const { passId, photoData, fileName, fileType } = await request.json()
+    const { passId, photoData, fileType } = await request.json()
     
     if (!passId || !photoData) {
       return NextResponse.json(

@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     console.log('🖼️ 1NRI logo base64 length:', nriLogoBase64.length)
 
     const browser = await puppeteer.launch({
-      headless: 'new',
+      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     })
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     await page.setViewport({ width, height })
 
     // Replace image paths with base64 data
-    let processedHtml = html
+    const processedHtml = html
       .replace('/images/kairos_PNG_UHD.png', kairosLogoBase64)
       .replace('/images/1NRI Logo - Fixed - Transparent (1).png', nriLogoBase64)
 
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     console.log('✅ Export completed successfully')
 
     // Return the image as a downloadable blob
-    return new NextResponse(buffer, {
+    return new NextResponse(Buffer.from(buffer), {
       status: 200,
       headers: {
         'Content-Type': 'image/png',
