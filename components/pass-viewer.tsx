@@ -10,7 +10,191 @@ import Image from "next/image"
 import imageCompression from "browser-image-compression"
 import { useTheme } from "next-themes"
 
-const kairosQuote = "You didn't just show up. You aligned."
+export const bibleVerses = [
+  {
+    reference: "Esther 4:14",
+    version: "NIV",
+    text: "And who knows but that you have come to your royal position for such a time as this?"
+  },
+  {
+    reference: "Jeremiah 29:11",
+    version: "NIV",
+    text: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future."
+  },
+  {
+    reference: "Ecclesiastes 3:1",
+    version: "NIV",
+    text: "There is a time for everything, and a season for every activity under the heavens."
+  },
+  {
+    reference: "Romans 8:28",
+    version: "NLT",
+    text: "And we know that God causes everything to work together for the good of those who love God and are called according to His purpose."
+  },
+  {
+    reference: "Philippians 1:6",
+    version: "NIV",
+    text: "He who began a good work in you will carry it on to completion until the day of Christ Jesus."
+  },
+  {
+    reference: "Isaiah 60:22",
+    version: "NLT",
+    text: "At the right time, I, the Lord, will make it happen."
+  },
+  {
+    reference: "Proverbs 16:3",
+    version: "NIV",
+    text: "Commit to the Lord whatever you do, and he will establish your plans."
+  },
+  {
+    reference: "Psalm 37:23",
+    version: "NLT",
+    text: "The Lord directs the steps of the godly. He delights in every detail of their lives."
+  },
+  {
+    reference: "Isaiah 43:19",
+    version: "NIV",
+    text: "See, I am doing a new thing! Now it springs up; do you not perceive it?"
+  },
+  {
+    reference: "2 Timothy 1:7",
+    version: "NLT",
+    text: "For God has not given us a spirit of fear and timidity, but of power, love, and self-discipline."
+  },
+  {
+    reference: "Psalm 46:5",
+    version: "NIV",
+    text: "God is within her, she will not fall; God will help her at break of day."
+  },
+  {
+    reference: "Romans 12:2",
+    version: "NLT",
+    text: "Let God transform you into a new person by changing the way you think."
+  },
+  {
+    reference: "Galatians 6:9",
+    version: "NIV",
+    text: "Let us not become weary in doing good, for at the proper time we will reap a harvest if we do not give up."
+  },
+  {
+    reference: "Isaiah 41:10",
+    version: "NLT",
+    text: "Don't be afraid, for I am with you. Don't be discouraged, for I am your God."
+  },
+  {
+    reference: "Proverbs 3:5-6",
+    version: "NIV",
+    text: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight."
+  },
+  {
+    reference: "Matthew 5:14",
+    version: "NIV",
+    text: "You are the light of the world. A town built on a hill cannot be hidden."
+  },
+  {
+    reference: "Ephesians 2:10",
+    version: "NLT",
+    text: "For we are God's masterpiece. He has created us anew in Christ Jesus, so we can do the good things he planned for us long ago."
+  },
+  {
+    reference: "1 Peter 2:9",
+    version: "NIV",
+    text: "But you are a chosen people, a royal priesthood, a holy nation, God's special possession."
+  },
+  {
+    reference: "Isaiah 54:17",
+    version: "NLT",
+    text: "No weapon formed against you will succeed, and you will silence every voice raised to accuse you."
+  },
+  {
+    reference: "Matthew 6:33",
+    version: "NIV",
+    text: "But seek first his kingdom and his righteousness, and all these things will be given to you as well."
+  },
+  {
+    reference: "Philippians 4:13",
+    version: "NLT",
+    text: "For I can do everything through Christ, who gives me strength."
+  },
+  {
+    reference: "Psalm 23:1",
+    version: "NIV",
+    text: "The Lord is my shepherd, I lack nothing."
+  },
+  {
+    reference: "Deuteronomy 31:6",
+    version: "NLT",
+    text: "So be strong and courageous! Do not be afraid and do not panic before them. For the Lord your God will personally go ahead of you."
+  },
+  {
+    reference: "Isaiah 30:21",
+    version: "NIV",
+    text: "Whether you turn to the right or to the left, your ears will hear a voice behind you, saying, 'This is the way; walk in it.'"
+  },
+  {
+    reference: "Psalm 139:14",
+    version: "NLT",
+    text: "Thank you for making me so wonderfully complex! Your workmanship is marvelous—how well I know it."
+  },
+  {
+    reference: "Romans 5:5",
+    version: "NIV",
+    text: "And hope does not put us to shame, because God's love has been poured out into our hearts through the Holy Spirit."
+  },
+  {
+    reference: "Lamentations 3:22-23",
+    version: "NLT",
+    text: "The faithful love of the Lord never ends! His mercies never cease. Great is his faithfulness; his mercies begin afresh each morning."
+  },
+  {
+    reference: "1 Corinthians 2:9",
+    version: "NIV",
+    text: "What no eye has seen, what no ear has heard, and what no human mind has conceived — the things God has prepared for those who love him."
+  },
+  {
+    reference: "Psalm 34:5",
+    version: "NIV",
+    text: "Those who look to him are radiant; their faces are never covered with shame."
+  },
+  {
+    reference: "John 16:33",
+    version: "NLT",
+    text: "I have told you all this so that you may have peace in me. Here on earth you will have many trials and sorrows. But take heart, because I have overcome the world."
+  }
+];
+
+export const genZAffirmations = [
+  "You didn't just show up. You aligned.",
+  "God said now. And you moved.",
+  "This moment isn't random. It's Kairos.",
+  "You're not just on time. You're right on purpose.",
+  "Heaven is clapping. You're here.",
+  "You answered the call. This is divine timing.",
+  "Anointed, appointed, and in the building.",
+  "You are not a coincidence. You're alignment in motion.",
+  "Kairos? That's your whole vibe right now.",
+  "You unlocked something sacred.",
+  "This is your timestamp. Mark it.",
+  "God's favor fits you like couture.",
+  "You're living proof of perfect timing.",
+  "You pulled up spiritually and physically.",
+  "This isn't just an event. This is your moment.",
+  "You're walking in answered prayer.",
+  "God whispered. You moved.",
+  "Nothing about this was accidental.",
+  "Grace got you here. Glory will carry you.",
+  "The glow? It's spiritual.",
+  "You were meant to be here. And it shows.",
+  "Time obeyed. You showed up.",
+  "You aligned in style.",
+  "You're a living prophecy in motion.",
+  "You're not late. You're chosen.",
+  "Don't downplay this. You stepped into something holy.",
+  "Look at you—walking in kairos like it's everyday.",
+  "Holy Spirit said: 'pull up.' And you did.",
+  "This isn't a pass. It's a reminder. You're called.",
+  "You caught it. The moment. The vibe. The assignment."
+];
 
 const colorOptions = [
   { id: "dark-green", name: "Dark Green", bg: "#182b11" },
@@ -256,7 +440,7 @@ export function PassViewer({ passId }: PassViewerProps) {
       try {
         await navigator.share({
           title: "My Kairos Pass",
-          text: `I'm attending Kairos: A 1NRI Experience! ${kairosQuote} #MyKairosPass`,
+          text: `I'm attending Kairos: A 1NRI Experience! ${attendeeData.message_text} #MyKairosPass`,
           url: `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.passId || attendeeData.id}`,
         })
       } catch (error) {
@@ -449,7 +633,7 @@ export function PassViewer({ passId }: PassViewerProps) {
               {/* Main Quote */}
               <div className="absolute bottom-[150px] left-4 right-4 text-center">
                 <h2 className="poppins-extrabold italic text-white text-sm leading-tight">
-                  &ldquo;{kairosQuote}&rdquo;
+                  &ldquo;{attendeeData.message_text}&rdquo;
                 </h2>
               </div>
 
