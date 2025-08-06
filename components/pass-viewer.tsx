@@ -191,15 +191,15 @@ export function PassViewer({ passId }: PassViewerProps) {
       // Prepare the photo (if exists)
       let photoHtml = qrCodeSVG
       if (displayPhoto) {
-        photoHtml = `<div style="background: white; padding: 24px; border-radius: 48px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
-          <div style="width: 510px; height: 510px; border-radius: 36px; overflow: hidden;">
-            <img src="${displayPhoto}" alt="Uploaded photo" style="width: 510px; height: 510px; object-fit: cover; border-radius: 36px;" />
+        photoHtml = `<div style="background: white; padding: 30px; border-radius: 60px; box-shadow: 0 12px 40px rgba(0,0,0,0.2);">
+          <div style="width: 600px; height: 600px; border-radius: 45px; overflow: hidden;">
+            <img src="${displayPhoto}" alt="Uploaded photo" style="width: 600px; height: 600px; object-fit: cover; border-radius: 45px;" />
           </div>
         </div>`
       } else {
         // QR code with white background
-        photoHtml = `<div style="background: white; padding: 24px; border-radius: 48px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
-          <div style="width: 510px; height: 510px; border-radius: 36px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: white;">
+        photoHtml = `<div style="background: white; padding: 30px; border-radius: 60px; box-shadow: 0 12px 40px rgba(0,0,0,0.2);">
+          <div style="width: 600px; height: 600px; border-radius: 45px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: white;">
             ${qrCodeSVG}
           </div>
         </div>`
@@ -249,55 +249,55 @@ export function PassViewer({ passId }: PassViewerProps) {
               
               .qr-area {
                 position: absolute;
-                top: 96px;
+                top: 120px;
                 left: 50%;
                 transform: translateX(-50%);
               }
               
               .logo-area {
                 position: absolute;
-                top: 570px;
+                top: 720px;
                 left: 50%;
                 transform: translateX(-50%);
                 width: 100%;
-                padding: 0 48px;
+                padding: 0 60px;
                 text-align: center;
               }
               
               .attendee-info {
                 position: absolute;
-                bottom: 600px;
-                left: 48px;
+                bottom: 720px;
+                left: 16px;
               }
               
               .pass-id {
                 position: absolute;
-                bottom: 600px;
-                right: 48px;
+                bottom: 720px;
+                right: 16px;
                 text-align: right;
               }
               
               .quote-area {
                 position: absolute;
-                bottom: 450px;
-                left: 48px;
-                right: 48px;
+                bottom: 540px;
+                left: 16px;
+                right: 16px;
                 text-align: center;
               }
               
               .verse-area {
                 position: absolute;
-                bottom: 150px;
-                left: 48px;
-                right: 48px;
+                bottom: 250px;
+                left: 60px;
+                right: 60px;
                 text-align: center;
               }
               
               .footer {
                 position: absolute;
-                bottom: 24px;
-                left: 48px;
-                right: 48px;
+                bottom: 8px;
+                left: 16px;
+                right: 16px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
@@ -305,47 +305,47 @@ export function PassViewer({ passId }: PassViewerProps) {
               
               .nri-logo {
                 position: absolute;
-                top: 24px;
-                left: 24px;
+                top: 8px;
+                left: 8px;
                 opacity: 0.6;
               }
               
               .attendee-name {
                 font-weight: bold;
-                font-size: 42px;
-                margin-bottom: 12px;
+                font-size: 48px;
+                margin-bottom: 16px;
                 line-height: 1.2;
               }
               
               .attendee-label {
                 font-style: italic;
-                font-size: 30px;
+                font-size: 32px;
                 opacity: 0.75;
               }
               
               .pass-id-text {
                 font-weight: bold;
-                font-size: 36px;
-                margin-bottom: 12px;
+                font-size: 40px;
+                margin-bottom: 16px;
                 line-height: 1.2;
               }
               
               .pass-id-label {
                 font-style: italic;
-                font-size: 30px;
+                font-size: 32px;
                 opacity: 0.75;
               }
               
               .quote-text {
                 font-weight: 800;
                 font-style: italic;
-                font-size: 42px;
-                line-height: 1.2;
+                font-size: 48px;
+                line-height: 1.3;
               }
               
               .verse-text {
-                font-size: 27px;
-                margin-bottom: 12px;
+                font-size: 32px;
+                margin-bottom: 16px;
                 line-height: 1.4;
                 opacity: 0.95;
               }
@@ -353,18 +353,18 @@ export function PassViewer({ passId }: PassViewerProps) {
               .verse-reference {
                 font-family: 'Courier New', monospace;
                 font-style: italic;
-                font-size: 24px;
+                font-size: 28px;
                 opacity: 0.75;
               }
               
               .footer-text {
-                font-size: 24px;
+                font-size: 28px;
                 opacity: 0.7;
               }
               
               .footer-bold {
                 font-weight: bold;
-                font-size: 24px;
+                font-size: 28px;
                 opacity: 0.9;
               }
             </style>
@@ -657,15 +657,15 @@ export function PassViewer({ passId }: PassViewerProps) {
                 </h2>
               </div>
 
-              {/* Bible Verse from Database */}
-              <div className="absolute bottom-[50px] left-4 right-4 text-center">
-                <p className="poppins-regular text-white text-[9px] mb-1 leading-relaxed opacity-95">
-                  {attendeeData.verse_text}
-                </p>
-                <p className="font-jetbrains-mono italic text-white text-[8px] opacity-75">
-                  {attendeeData.verse_reference}
-                </p>
-              </div>
+                              {/* Bible Verse from Database */}
+                <div className="absolute bottom-[50px] left-4 right-4 text-center">
+                  <p className="poppins-regular text-white text-[9px] mb-1 leading-relaxed opacity-95">
+                    {attendeeData.verse_text}
+                  </p>
+                  <p className="font-jetbrains-mono italic text-white text-[8px] opacity-75">
+                    {attendeeData.verse_reference}
+                  </p>
+                </div>
 
               {/* Footer */}
               <div className="absolute bottom-2 left-4 right-4 flex justify-between items-center">
