@@ -4,19 +4,22 @@ import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { QRCodeSVG } from "qrcode.react"
-import { Download, Share2, Camera, ArrowLeft, Sparkles, Image as ImageIcon } from "lucide-react"
+import { Download, Share2, Camera, ArrowLeft, Sparkles, Image as ImageIcon, Palette } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
 import imageCompression from "browser-image-compression"
+import { useTheme } from "next-themes"
 
 const kairosQuote = "You didn't just show up. You aligned."
 
 const colorOptions = [
   { id: "dark-green", name: "Dark Green", bg: "#182b11" },
-  { id: "dark-purple", name: "Dark Purple", bg: "#2d1b69" },
+  { id: "dark-purple", name: "Dark Purple", bg: "#2B1128" },
   { id: "midnight-blue", name: "Midnight Blue", bg: "#0f1419" },
   { id: "deep-burgundy", name: "Deep Burgundy", bg: "#4a1810" },
 ]
+
+// Choose logo based on theme (moved inside component to use hook safely)
 
 const getPassColors = (color: string) => {
   const option = colorOptions.find(opt => opt.id === color)
@@ -57,6 +60,16 @@ export function PassViewer({ passId }: PassViewerProps) {
   const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [storedPhotoUrl, setStoredPhotoUrl] = useState<string | null>(null)
+  const [showColorPicker, setShowColorPicker] = useState(false)
+
+  // Use theme hook inside the component
+  const { resolvedTheme } = useTheme()
+
+  // Choose logo based on theme
+  const logoSrc =
+    resolvedTheme === "light"
+      ? "/images/1NRI Logo - Black.png"
+      : "/images/1NRI Logo - Fixed - Transparent (1).png"
 
   // Function to fetch stored photo from Supabase
   const fetchStoredPhoto = async (passId: string) => {
@@ -321,7 +334,45 @@ export function PassViewer({ passId }: PassViewerProps) {
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold">Personalize Your Pass</h1>
             <p className="text-muted-foreground">Upload your selfie to create a unique Kairos memory</p>
-            <p className="text-sm font-medium text-green-600">Make it yours, {fullName} ✨</p>
+            <p className="text-sm font-medium text-green-600">Make it yours, {firstName} ✨</p>
+          </div>
+
+          {/* Color Picker */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium">Pass Color</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowColorPicker(!showColorPicker)}
+                className="px-3 py-1"
+              >
+                <Palette className="w-4 h-4 mr-1" />
+                <span className="text-xs">Change</span>
+              </Button>
+            </div>
+            
+            {showColorPicker && (
+              <div className="grid grid-cols-2 gap-2 p-3 border rounded-lg bg-card">
+                {colorOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => setSelectedColor(option.id)}
+                    className={`flex items-center space-x-2 p-2 rounded-lg border transition-all w-full ${
+                      selectedColor === option.id 
+                        ? 'border-primary bg-primary/10' 
+                        : 'border-border hover:bg-muted'
+                    }`}
+                  >
+                    <div 
+                      className="w-4 h-4 rounded-full" 
+                      style={{ backgroundColor: option.bg }}
+                    />
+                    <span className="text-xs">{option.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Pass Design */}
@@ -402,7 +453,7 @@ export function PassViewer({ passId }: PassViewerProps) {
                 </h2>
               </div>
 
-              {/* Bible Verse */}
+              {/* Bible Verse from Database */}
               <div className="absolute bottom-[50px] left-4 right-4 text-center">
                 <p className="poppins-regular text-white text-[9px] mb-1 leading-relaxed opacity-95">
                   {attendeeData.verse_text}
@@ -426,7 +477,7 @@ export function PassViewer({ passId }: PassViewerProps) {
               {/* 1NRI Logo - Top Left */}
               <div className="absolute top-2 left-2">
                 <Image
-                  src="/images/1NRI Logo - Fixed - Transparent (1).png"
+                  src={logoSrc}
                   alt="1NRI Logo"
                   width={20}
                   height={20}
