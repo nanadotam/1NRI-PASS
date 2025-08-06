@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       else if (fileType.includes('heic') || fileType.includes('heif')) fileExtension = 'heic'
     }
     
-    // Generate unique filename
+    // Generate unique filename using pass_id
     const timestamp = Date.now()
     const uniqueFileName = `${passId}-${timestamp}.${fileExtension}`
     

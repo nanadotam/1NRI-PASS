@@ -56,6 +56,12 @@ export async function POST(request: NextRequest) {
     const randomVerse = bibleVerses[Math.floor(Math.random() * bibleVerses.length)];
     const randomMessage = genZMessages[Math.floor(Math.random() * genZMessages.length)];
 
+    // Generate a unique pass ID (KAIROS-XXXX format)
+    const generatePassId = () => {
+      const randomNum = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
+      return `KAIROS-${randomNum}`;
+    };
+
     // Insert attendee data into Supabase with the correct schema
     const { data, error } = await supabase
       .from('kairos_passes')
@@ -69,7 +75,8 @@ export async function POST(request: NextRequest) {
           verse_reference: randomVerse.reference,
           verse_text: randomVerse.text,
           message_text: randomMessage,
-          theme: attendeeData.passColor || 'dark-green' // Updated to use passColor from form
+          theme: attendeeData.passColor || 'dark-green',
+          pass_id: generatePassId()
         }
       ])
       .select()
@@ -143,7 +150,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: data
+      data: {
+        ...data,
+        id: data.pass_id, // Use pass_id as the primary identifier
+        passId: data.pass_id // Also include as passId for clarity
+      }
     })
 
   } catch (error) {

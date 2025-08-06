@@ -13,11 +13,11 @@ export async function GET(
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
-    // Fetch pass data from Supabase using the correct table name
+    // Fetch pass data from Supabase using pass_id instead of UUID
     const { data, error } = await supabase
       .from('kairos_passes')
       .select('*')
-      .eq('id', passId)
+      .eq('pass_id', passId)
       .single()
 
     if (error || !data) {
@@ -31,7 +31,8 @@ export async function GET(
 
     // Transform the data to match the frontend expected format using correct field names
     const transformedData = {
-      id: data.id,
+      id: data.pass_id, // Use pass_id instead of UUID
+      passId: data.pass_id, // Also include as passId for clarity
       fullName: `${data.first_name} ${data.last_name}`,
       firstName: data.first_name,
       lastName: data.last_name,

@@ -36,6 +36,7 @@ const getPassColors = (color: string) => {
 
 interface AttendeeData {
   id: string;
+  passId?: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -165,7 +166,7 @@ export function PassPage() {
         await navigator.share({
           title: "My Kairos Pass",
           text: `I'm attending Kairos: A 1NRI Experience! ${kairosQuote} #MyKairosPass`,
-          url: `${window.location.origin}/pass/${attendeeData.id}`,
+          url: `${window.location.origin}/pass/${attendeeData.passId || attendeeData.id}`,
         })
       } catch (error) {
         console.error("Error sharing:", error)
@@ -175,7 +176,7 @@ export function PassPage() {
 
   const goToPersonalize = () => {
     if (attendeeData) {
-      router.push(`/pass/${attendeeData.id}/personalize`)
+      router.push(`/pass/${attendeeData.passId || attendeeData.id}/personalize`)
     }
   }
 
@@ -256,7 +257,7 @@ export function PassPage() {
 
   // Show pass if we have attendee data
   if (attendeeData) {
-    const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.id}`
+    const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.passId || attendeeData.id}`
     const colors = getPassColors(selectedColor)
 
     return (
@@ -368,7 +369,7 @@ export function PassPage() {
                 {/* Pass ID */}
                 <div className="absolute bottom-[200px] right-4 text-right">
                   <h4 className="font-jetbrains-mono font-bold text-white text-xs mb-1 leading-tight">
-                    {attendeeData.id}
+                    {attendeeData.passId || attendeeData.id}
                   </h4>
                   <p className="font-jetbrains-mono italic text-white text-[10px] opacity-75">
                     PASS ID

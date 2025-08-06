@@ -37,6 +37,7 @@ export function PassViewer({ passId }: PassViewerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [attendeeData, setAttendeeData] = useState<{
     id: string;
+    passId?: string;
     first_name: string;
     last_name: string;
     email: string;
@@ -215,7 +216,7 @@ export function PassViewer({ passId }: PassViewerProps) {
         await navigator.share({
           title: "My Kairos Pass",
           text: `I'm attending Kairos: A 1NRI Experience! ${kairosQuote} #MyKairosPass`,
-          url: `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.id}`,
+          url: `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.passId || attendeeData.id}`,
         })
       } catch (error) {
         console.error("Error sharing:", error)
@@ -270,7 +271,7 @@ export function PassViewer({ passId }: PassViewerProps) {
     )
   }
 
-  const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.id}`
+      const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.passId || attendeeData.id}`
   const colors = getPassColors(selectedColor)
   const firstName = attendeeData.first_name || 'Attendee'
 
@@ -360,7 +361,7 @@ export function PassViewer({ passId }: PassViewerProps) {
               {/* Pass ID - Right Side */}
               <div className="absolute bottom-[200px] right-4 text-right">
                 <h4 className="font-jetbrains-mono font-bold text-white text-xs mb-1 leading-tight">
-                  {attendeeData.id}
+                  {attendeeData.passId || attendeeData.id}
                 </h4>
                 <p className="font-jetbrains-mono italic text-white text-[10px] opacity-75">
                   PASS ID

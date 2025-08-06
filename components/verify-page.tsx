@@ -17,6 +17,7 @@ export function VerifyPage({ passId }: VerifyPageProps) {
   const router = useRouter()
   const [attendeeData, setAttendeeData] = useState<{
     id: string;
+    passId?: string;
     first_name: string;
     last_name: string;
     email: string;
@@ -193,7 +194,7 @@ export function VerifyPage({ passId }: VerifyPageProps) {
               {/* Pass ID */}
               <div className="text-center border-t pt-4">
                 <p className="text-xs text-gray-500 mb-1">Pass ID</p>
-                <p className="font-mono text-xs text-gray-600">{attendeeData.id}</p>
+                <p className="font-mono text-xs text-gray-600">{attendeeData.passId || attendeeData.id}</p>
                 <p className="text-xs text-gray-500 mt-2">
                   Registered: {new Date(attendeeData.timestamp).toLocaleDateString()}
                 </p>
