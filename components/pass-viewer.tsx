@@ -40,6 +40,8 @@ export function PassViewer({ passId }: PassViewerProps) {
     passId?: string;
     first_name: string;
     last_name: string;
+    firstName?: string;
+    lastName?: string;
     email: string;
     phone_number: string;
     heard_about: string;
@@ -76,16 +78,21 @@ export function PassViewer({ passId }: PassViewerProps) {
   useEffect(() => {
     const fetchAttendeeData = async () => {
       try {
+        console.log('🔍 Fetching attendee data for passId:', passId)
         const response = await fetch(`/api/verify/${passId}`)
         const data = await response.json()
         
-        if (data.success) {
+        console.log('📋 API response:', data)
+        
+        if (data.success && data.data) {
+          console.log('✅ Setting attendee data:', data.data)
           setAttendeeData(data.data)
-          setSelectedColor(data.data.passColor || "dark-green")
+          setSelectedColor(data.data.passColor || data.data.theme || "dark-green")
           
           // Fetch any stored photos for this pass
           await fetchStoredPhoto(passId)
         } else {
+          console.error('❌ API returned error:', data.message || 'Unknown error')
           setAttendeeData(null)
         }
       } catch (error) {
@@ -188,12 +195,6 @@ export function PassViewer({ passId }: PassViewerProps) {
           qrCodeArea.innerHTML = `
             <div class="relative w-[170px] h-[170px] rounded-xl overflow-hidden bg-white p-3">
               <img src="${displayPhoto}" alt="Uploaded photo" style="width: 170px; height: 170px; object-fit: cover; border-radius: 12px;" />
-              <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; border-radius: 12px;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
-                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
-                  <circle cx="12" cy="13" r="3"/>
-                </svg>
-              </div>
             </div>
           `
         }
@@ -300,7 +301,9 @@ export function PassViewer({ passId }: PassViewerProps) {
 
   const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.passId || attendeeData.id}`
   const colors = getPassColors(selectedColor)
-  const firstName = attendeeData.first_name || 'Attendee'
+  const firstName = attendeeData.firstName || attendeeData.first_name || 'Attendee'
+  const lastName = attendeeData.lastName || attendeeData.last_name || ''
+  const fullName = `${firstName} ${lastName}`.trim() || 'Attendee'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -318,7 +321,7 @@ export function PassViewer({ passId }: PassViewerProps) {
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold">Personalize Your Pass</h1>
             <p className="text-muted-foreground">Upload your selfie to create a unique Kairos memory</p>
-            <p className="text-sm font-medium text-green-600">Make it yours, {firstName} ✨</p>
+            <p className="text-sm font-medium text-green-600">Make it yours, {fullName} ✨</p>
           </div>
 
           {/* Pass Design */}
@@ -343,9 +346,6 @@ export function PassViewer({ passId }: PassViewerProps) {
                       height={170}
                       className="object-cover w-full h-full"
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-                      <Camera className="h-8 w-8 text-white drop-shadow-lg" />
-                    </div>
                   </div>
                 ) : (
                   <QRCodeSVG 
@@ -378,7 +378,7 @@ export function PassViewer({ passId }: PassViewerProps) {
               {/* Attendee Information - Left Side */}
               <div className="absolute bottom-[200px] left-4">
                 <h3 className="font-jetbrains-mono font-bold text-white text-sm mb-1 leading-tight">
-                  {attendeeData.first_name} {attendeeData.last_name}
+                  {attendeeData.firstName || attendeeData.first_name} {attendeeData.lastName || attendeeData.last_name}
                 </h3>
                 <p className="font-jetbrains-mono italic text-white text-[10px] opacity-75">
                   Attendee Name
@@ -436,23 +436,14 @@ export function PassViewer({ passId }: PassViewerProps) {
             </div>
           </div>
 
-          {/* Photo Upload Section */}
-          <div className="space-y-6">
-            <div className="text-center">
-              <h3 className="text-xl font-semibold mb-2">Upload Your Selfie 📸</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {displayPhoto 
-                  ? "Your photo will replace the QR code on your pass" 
-                  : "Take a selfie to personalize your Kairos pass"
-                }
-              </p>
-            </div>
-
+          {/* Action Buttons */}
+          <div className="space-y-4">
+            {/* Photo Upload Section */}
             <div className="flex space-x-3">
               <Button 
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline" 
-                className="flex-1 h-12 text-lg"
+                className="flex-1 h-12"
                 disabled={isUploading}
               >
                 {isUploading ? (
@@ -460,7 +451,7 @@ export function PassViewer({ passId }: PassViewerProps) {
                 ) : (
                   <ImageIcon className="mr-2 h-5 w-5" />
                 )}
-                {displayPhoto ? 'Change Photo' : 'Upload Selfie'}
+                Change Photo
               </Button>
               
               {displayPhoto && (
@@ -486,47 +477,27 @@ export function PassViewer({ passId }: PassViewerProps) {
               className="hidden"
             />
 
-            {displayPhoto && (
-              <div className="text-center">
-                <div className="relative inline-block">
-                  <Image
-                    src={displayPhoto}
-                    alt="Uploaded photo"
-                    width={200}
-                    height={200}
-                    className="rounded-lg object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
-                    <Camera className="h-8 w-8 text-white" />
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Photo will replace QR code on download
-                </p>
+            {/* Download and Share Buttons */}
+            <div className="flex space-x-3">
+              <Button onClick={downloadPass} className="flex-1 bg-green-600 hover:bg-green-700 h-12">
+                <Download className="mr-2 h-5 w-5" />
+                Download Pass + Photo
+              </Button>
+              <Button onClick={sharePass} variant="outline" className="flex-1 h-12">
+                <Share2 className="mr-2 h-5 w-5" />
+                Share
+              </Button>
+            </div>
+
+            {/* Kairos Hashtag */}
+            <div className="text-center p-4 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg">
+              <h3 className="font-semibold text-green-800 mb-2">Share Your Kairos Moment</h3>
+              <p className="text-sm text-green-700 mb-3">
+                Post this on social media with the hashtag
+              </p>
+              <div className="bg-white px-4 py-2 rounded-lg border border-green-300 inline-block">
+                <span className="font-mono text-green-600 font-bold">#MyKairosPass</span>
               </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex space-x-3">
-            <Button onClick={downloadPass} className="flex-1 bg-green-600 hover:bg-green-700 h-12 text-lg">
-              <Download className="mr-2 h-5 w-5" />
-              {displayPhoto ? 'Download Pass + Photo' : 'Download Pass'}
-            </Button>
-            <Button onClick={sharePass} variant="outline" className="flex-1 h-12 text-lg">
-              <Share2 className="mr-2 h-5 w-5" />
-              Share
-            </Button>
-          </div>
-
-          {/* Social Media Prompt */}
-          <div className="text-center p-4 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg">
-            <h3 className="font-semibold text-green-800 mb-2">Share Your Kairos Moment</h3>
-            <p className="text-sm text-green-700 mb-3">
-              Post this on social media with the hashtag
-            </p>
-            <div className="bg-white px-4 py-2 rounded-lg border border-green-300 inline-block">
-              <span className="font-mono text-green-600 font-bold">#MyKairosPass</span>
             </div>
           </div>
         </div>
