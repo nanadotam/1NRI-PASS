@@ -30,7 +30,20 @@ This guide will help you set up the storage bucket in Supabase for storing user 
 
 3. **Create the bucket**
 
-### Step 3: Set Up Row Level Security (RLS)
+### Step 3: Storage Security Setup
+
+You have two options for security:
+
+#### Option A: Disable RLS (Recommended for public events)
+
+1. **Go to Storage > Policies**:
+   - Click on your `kairos-photos` bucket
+   - Go to the "Settings" tab
+   - **Disable Row Level Security (RLS)**: ✅ Check this box
+
+This allows anyone to upload photos, which is appropriate for a public event app.
+
+#### Option B: Configure RLS Policies (If you want more control)
 
 1. **Go to Storage > Policies**:
    - Click on your `kairos-photos` bucket
@@ -38,12 +51,9 @@ This guide will help you set up the storage bucket in Supabase for storing user 
 
 2. **Create Upload Policy**:
    ```sql
-   -- Allow authenticated users to upload photos
-   CREATE POLICY "Allow authenticated uploads" ON storage.objects
-   FOR INSERT WITH CHECK (
-     bucket_id = 'kairos-photos' AND
-     auth.role() = 'authenticated'
-   );
+   -- Allow public uploads to the kairos-photos bucket
+   CREATE POLICY "Allow public uploads" ON storage.objects
+   FOR INSERT WITH CHECK (bucket_id = 'kairos-photos');
    ```
 
 3. **Create Read Policy**:
@@ -55,12 +65,9 @@ This guide will help you set up the storage bucket in Supabase for storing user 
 
 4. **Create Update Policy**:
    ```sql
-   -- Allow users to update their own photos
-   CREATE POLICY "Allow authenticated updates" ON storage.objects
-   FOR UPDATE USING (
-     bucket_id = 'kairos-photos' AND
-     auth.role() = 'authenticated'
-   );
+   -- Allow public updates to photos
+   CREATE POLICY "Allow public updates" ON storage.objects
+   FOR UPDATE USING (bucket_id = 'kairos-photos');
    ```
 
 ### Step 4: Test the Setup
@@ -93,22 +100,23 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 
 The upload API route (`app/api/upload-photo/route.ts`) is already configured to use:
 - Bucket name: `kairos-photos`
-- File naming: `${passId}.jpg`
+- File naming: `${passId}-${timestamp}.${fileExtension}`
 - Content type: `image/jpeg`
 
 ## 📁 File Structure
 
 ```
 kairos-photos/
-├── KAIROS-1234.jpg
-├── KAIROS-5678.jpg
-└── ...
+├── pass-selfies/
+│   ├── KAIROS-1234-1703123456789.jpg
+│   ├── KAIROS-5678-1703123456790.png
+│   └── ...
 ```
 
 ## 🔒 Security Considerations
 
 1. **Public Read Access**: Photos are publicly readable for social media sharing
-2. **Authenticated Uploads**: Only authenticated users can upload
+2. **Public Uploads**: Anyone can upload photos (appropriate for public events)
 3. **File Size Limits**: 5MB limit prevents abuse
 4. **Image Types Only**: Only image files are allowed
 
@@ -121,7 +129,8 @@ kairos-photos/
    - Check bucket is created in the correct project
 
 2. **Upload permissions denied**:
-   - Verify RLS policies are created
+   - If using RLS, verify policies are created correctly
+   - Consider disabling RLS for public event apps
    - Check that policies include the correct bucket_id
 
 3. **File size too large**:
