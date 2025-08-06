@@ -54,6 +54,24 @@ export function PassViewer({ passId }: PassViewerProps) {
   const [selectedColor, setSelectedColor] = useState<string>("dark-green")
   const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [storedPhotoUrl, setStoredPhotoUrl] = useState<string | null>(null)
+
+  // Function to fetch stored photo from Supabase
+  const fetchStoredPhoto = async (passId: string) => {
+    try {
+      // List files in the pass-selfies folder to find photos for this pass
+      const response = await fetch(`/api/storage/list-photos?passId=${passId}`)
+      const data = await response.json()
+      
+      if (data.success && data.photos.length > 0) {
+        // Get the most recent photo (last in the array)
+        const latestPhoto = data.photos[data.photos.length - 1]
+        setStoredPhotoUrl(latestPhoto.url)
+      }
+    } catch (error) {
+      console.error("Error fetching stored photo:", error)
+    }
+  }
 
   useEffect(() => {
     const fetchAttendeeData = async () => {
@@ -64,6 +82,9 @@ export function PassViewer({ passId }: PassViewerProps) {
         if (data.success) {
           setAttendeeData(data.data)
           setSelectedColor(data.data.passColor || "dark-green")
+          
+          // Fetch any stored photos for this pass
+          await fetchStoredPhoto(passId)
         } else {
           setAttendeeData(null)
         }
@@ -115,7 +136,10 @@ export function PassViewer({ passId }: PassViewerProps) {
           })
           
           const uploadData = await uploadResponse.json()
-          if (!uploadData.success) {
+          if (uploadData.success) {
+            // Update the stored photo URL with the new upload
+            setStoredPhotoUrl(uploadData.data.url)
+          } else {
             console.error("Failed to upload photo:", uploadData.error)
           }
         } catch (uploadError) {
@@ -130,6 +154,9 @@ export function PassViewer({ passId }: PassViewerProps) {
       setIsUploading(false)
     }
   }
+
+  // Determine which photo to display (uploaded takes precedence over stored)
+  const displayPhoto = uploadedPhoto || storedPhotoUrl
 
   const downloadPass = async () => {
     if (!passRef.current) return
@@ -154,13 +181,13 @@ export function PassViewer({ passId }: PassViewerProps) {
       tempDiv.appendChild(passClone)
       document.body.appendChild(tempDiv)
 
-      // If there's an uploaded photo, replace the QR code with the photo
-      if (uploadedPhoto) {
+      // If there's a photo, replace the QR code with the photo
+      if (displayPhoto) {
         const qrCodeArea = passClone.querySelector('.absolute.top-8') as HTMLElement
         if (qrCodeArea) {
           qrCodeArea.innerHTML = `
             <div class="relative w-[170px] h-[170px] rounded-xl overflow-hidden bg-white p-3">
-              <img src="${uploadedPhoto}" alt="Uploaded photo" style="width: 170px; height: 170px; object-fit: cover; border-radius: 12px;" />
+              <img src="${displayPhoto}" alt="Uploaded photo" style="width: 170px; height: 170px; object-fit: cover; border-radius: 12px;" />
               <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; border-radius: 12px;">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
                   <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
@@ -271,7 +298,7 @@ export function PassViewer({ passId }: PassViewerProps) {
     )
   }
 
-      const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.passId || attendeeData.id}`
+  const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.passId || attendeeData.id}`
   const colors = getPassColors(selectedColor)
   const firstName = attendeeData.first_name || 'Attendee'
 
@@ -307,10 +334,10 @@ export function PassViewer({ passId }: PassViewerProps) {
             >
               {/* QR Code or Photo Area - Top Section */}
               <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-white p-3 rounded-2xl shadow-lg">
-                {uploadedPhoto ? (
+                {displayPhoto ? (
                   <div className="relative w-[170px] h-[170px] rounded-xl overflow-hidden">
                     <Image
-                      src={uploadedPhoto}
+                      src={displayPhoto}
                       alt="Uploaded photo"
                       width={170}
                       height={170}
@@ -414,7 +441,7 @@ export function PassViewer({ passId }: PassViewerProps) {
             <div className="text-center">
               <h3 className="text-xl font-semibold mb-2">Upload Your Selfie 📸</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                {uploadedPhoto 
+                {displayPhoto 
                   ? "Your photo will replace the QR code on your pass" 
                   : "Take a selfie to personalize your Kairos pass"
                 }
@@ -433,12 +460,15 @@ export function PassViewer({ passId }: PassViewerProps) {
                 ) : (
                   <ImageIcon className="mr-2 h-5 w-5" />
                 )}
-                {uploadedPhoto ? 'Change Photo' : 'Upload Selfie'}
+                {displayPhoto ? 'Change Photo' : 'Upload Selfie'}
               </Button>
               
-              {uploadedPhoto && (
+              {displayPhoto && (
                 <Button 
-                  onClick={() => setUploadedPhoto(null)}
+                  onClick={() => {
+                    setUploadedPhoto(null)
+                    setStoredPhotoUrl(null)
+                  }}
                   variant="outline" 
                   className="bg-red-50 hover:bg-red-100 text-red-600 border-red-200 h-12"
                 >
@@ -456,11 +486,11 @@ export function PassViewer({ passId }: PassViewerProps) {
               className="hidden"
             />
 
-            {uploadedPhoto && (
+            {displayPhoto && (
               <div className="text-center">
                 <div className="relative inline-block">
                   <Image
-                    src={uploadedPhoto}
+                    src={displayPhoto}
                     alt="Uploaded photo"
                     width={200}
                     height={200}
@@ -481,7 +511,7 @@ export function PassViewer({ passId }: PassViewerProps) {
           <div className="flex space-x-3">
             <Button onClick={downloadPass} className="flex-1 bg-green-600 hover:bg-green-700 h-12 text-lg">
               <Download className="mr-2 h-5 w-5" />
-              {uploadedPhoto ? 'Download Pass + Photo' : 'Download Pass'}
+              {displayPhoto ? 'Download Pass + Photo' : 'Download Pass'}
             </Button>
             <Button onClick={sharePass} variant="outline" className="flex-1 h-12 text-lg">
               <Share2 className="mr-2 h-5 w-5" />
