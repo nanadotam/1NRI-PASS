@@ -58,6 +58,9 @@ export function PassViewer({ passId }: PassViewerProps) {
   const [selectedColor, setSelectedColor] = useState<string>("dark-green")
   const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<string>("")
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState<string>("")
   const [storedPhotoUrl, setStoredPhotoUrl] = useState<string | null>(null)
   const [showColorPicker, setShowColorPicker] = useState(false)
 
@@ -122,11 +125,13 @@ export function PassViewer({ passId }: PassViewerProps) {
     if (!file) return
 
     setIsUploading(true)
+    setUploadProgress("Processing photo...")
     try {
       let processedFile = file
 
       // Handle HEIC format conversion
       if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+        setUploadProgress("Converting HEIC format...")
         try {
           const convertedBlob = await heic2any({
             blob: file,
@@ -145,6 +150,7 @@ export function PassViewer({ passId }: PassViewerProps) {
       }
 
       // Compress the image
+      setUploadProgress("Compressing image...")
       const compressedFile = await imageCompression(processedFile, {
         maxSizeMB: 1,
         maxWidthOrHeight: 1024,
@@ -152,12 +158,14 @@ export function PassViewer({ passId }: PassViewerProps) {
       })
 
       // Convert to base64 for immediate display
+      setUploadProgress("Preparing for upload...")
       const reader = new FileReader()
       reader.onload = async (e) => {
         const base64Result = e.target?.result as string
         setUploadedPhoto(base64Result)
 
         // Upload to Supabase storage
+        setUploadProgress("Uploading to your pass...")
         try {
           const uploadResponse = await fetch('/api/upload-photo', {
             method: 'POST',
@@ -176,19 +184,25 @@ export function PassViewer({ passId }: PassViewerProps) {
           if (uploadData.success) {
             // Update the stored photo URL with the new upload
             setStoredPhotoUrl(uploadData.data.url)
+            setUploadProgress("Photo uploaded successfully!")
           } else {
             console.error("Failed to upload photo:", uploadData.error)
+            setUploadProgress("Upload failed. Please try again.")
           }
         } catch (uploadError) {
           console.error("Error uploading to Supabase:", uploadError)
+          setUploadProgress("Upload failed. Please try again.")
         }
       }
       reader.readAsDataURL(compressedFile)
       
     } catch (error) {
       console.error("Error uploading photo:", error)
+      setUploadProgress("Upload failed. Please try again.")
     } finally {
       setIsUploading(false)
+      // Clear progress message after a short delay
+      setTimeout(() => setUploadProgress(""), 2000)
     }
   }
 
@@ -198,9 +212,13 @@ export function PassViewer({ passId }: PassViewerProps) {
   const downloadPass = async () => {
     if (!attendeeData) return
 
+    setIsDownloading(true)
+    setDownloadProgress("Preparing your pass...")
+    
     try {
       console.log('🚀 Starting Puppeteer export...')
       
+      setDownloadProgress("Generating QR code...")
       // Get the QR code SVG
       const qrCodeSVG = `<svg width="170" height="170" viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
         <rect width="170" height="170" fill="white"/>
@@ -208,6 +226,7 @@ export function PassViewer({ passId }: PassViewerProps) {
       </svg>`
 
       // Prepare the photo (if exists)
+      setDownloadProgress("Processing photo...")
       let photoHtml = qrCodeSVG
       if (displayPhoto) {
         photoHtml = `<div style="background: white; padding: 30px; border-radius: 60px; box-shadow: 0 12px 40px rgba(0,0,0,0.2);">
@@ -430,9 +449,11 @@ export function PassViewer({ passId }: PassViewerProps) {
         </html>
       `
 
+      setDownloadProgress("Creating pass design...")
       console.log('📝 Generated HTML for pass')
 
       // Send to the API
+      setDownloadProgress("Generating high-quality image...")
       const response = await fetch('/api/export-pass', {
         method: 'POST',
         headers: {
@@ -449,6 +470,7 @@ export function PassViewer({ passId }: PassViewerProps) {
         throw new Error(`Export failed: ${response.status}`)
       }
 
+      setDownloadProgress("Preparing download...")
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
 
@@ -460,10 +482,16 @@ export function PassViewer({ passId }: PassViewerProps) {
       link.remove()
       window.URL.revokeObjectURL(url)
 
+      setDownloadProgress("Download complete!")
       console.log('✅ Pass exported successfully')
 
     } catch (error) {
       console.error("❌ Error exporting pass:", error)
+      setDownloadProgress("Download failed. Please try again.")
+    } finally {
+      setIsDownloading(false)
+      // Clear progress message after a short delay
+      setTimeout(() => setDownloadProgress(""), 2000)
     }
   }
 
@@ -543,7 +571,19 @@ export function PassViewer({ passId }: PassViewerProps) {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-md mx-auto space-y-6">
+        <div className="max-w-md mx-auto space-y-6 relative">
+          {/* Download Loading Overlay */}
+          {isDownloading && (
+            <div className="absolute inset-0 bg-background/90 backdrop-blur-sm rounded-lg flex items-center justify-center z-20">
+              <div className="text-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+                <div className="space-y-2">
+                  <p className="text-lg font-semibold text-green-600">{downloadProgress}</p>
+                  <p className="text-sm text-muted-foreground">Creating your personalized pass...</p>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Welcome Message */}
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold">Personalize Your Pass</h1>
@@ -711,19 +751,32 @@ export function PassViewer({ passId }: PassViewerProps) {
 
           {/* Action Buttons */}
           <div className="space-y-4">
-            {/* Photo Upload Section */}
-            <div className="space-y-3">
-              {/* Heading/Prompt for photo upload */}
-              <div className="text-center mb-2">
-                <h3 className="text-base font-bold text-white poppins-extrabold">
-                  CUSTOMIZE YOUR PASS BY UPLOADING YOUR SELFIE.
-                </h3>
-                <p className="text-xs text-muted-foreground italic">
-                  (Pssst... make it a cute one!)
-                </p>
-              </div>
-              {/* Mobile-friendly upload options */}
-              <div className="grid grid-cols-2 gap-3">
+                                        {/* Photo Upload Section */}
+              <div className="relative space-y-3">
+                {/* Heading/Prompt for photo upload */}
+                <div className="text-center mb-2">
+                  <h3 className="text-base font-bold text-white poppins-extrabold">
+                    CUSTOMIZE YOUR PASS BY UPLOADING YOUR SELFIE.
+                  </h3>
+                  <p className="text-xs text-muted-foreground italic">
+                    (Pssst... make it a cute one!)
+                  </p>
+                </div>
+                
+                {/* Loading overlay when uploading */}
+                {isUploading && (
+                  <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
+                    <div className="text-center space-y-3">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{uploadProgress}</p>
+                        <p className="text-xs text-muted-foreground">Please wait while we process your photo</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* Mobile-friendly upload options */}
+                <div className="grid grid-cols-2 gap-3">
                 <Button 
                   onClick={() => {
                     if (fileInputRef.current) {
@@ -736,11 +789,16 @@ export function PassViewer({ passId }: PassViewerProps) {
                   disabled={isUploading}
                 >
                   {isUploading ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                    <div className="flex flex-col items-center space-y-1">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                      <span className="text-xs text-primary">Processing...</span>
+                    </div>
                   ) : (
-                    <FolderOpen className="h-5 w-5" />
+                    <>
+                      <FolderOpen className="h-5 w-5" />
+                      <span className="text-xs">Choose from Files</span>
+                    </>
                   )}
-                  <span className="text-xs">Choose from Files</span>
                 </Button>
                 
                 <Button 
@@ -755,11 +813,16 @@ export function PassViewer({ passId }: PassViewerProps) {
                   disabled={isUploading}
                 >
                   {isUploading ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                    <div className="flex flex-col items-center space-y-1">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                      <span className="text-xs text-primary">Processing...</span>
+                    </div>
                   ) : (
-                    <Camera className="h-5 w-5" />
+                    <>
+                      <Camera className="h-5 w-5" />
+                      <span className="text-xs">Take Photo</span>
+                    </>
                   )}
-                  <span className="text-xs">Take Photo</span>
                 </Button>
               </div>
               
@@ -794,11 +857,29 @@ export function PassViewer({ passId }: PassViewerProps) {
 
             {/* Download and Share Buttons */}
             <div className="flex space-x-3">
-              <Button onClick={downloadPass} className="flex-1 bg-green-600 hover:bg-green-700 h-12">
-                <Download className="mr-2 h-5 w-5" />
-                Download Personalized Pass
+              <Button 
+                onClick={downloadPass} 
+                className="flex-1 bg-green-600 hover:bg-green-700 h-12"
+                disabled={isDownloading}
+              >
+                {isDownloading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span className="text-sm">Generating...</span>
+                  </div>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-5 w-5" />
+                    Download Personalized Pass
+                  </>
+                )}
               </Button>
-              <Button onClick={sharePass} variant="outline" className="flex-1 h-12">
+              <Button 
+                onClick={sharePass} 
+                variant="outline" 
+                className="flex-1 h-12"
+                disabled={isDownloading}
+              >
                 <Share2 className="mr-2 h-5 w-5" />
                 Share
               </Button>
