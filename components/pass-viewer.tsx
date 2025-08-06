@@ -4,11 +4,12 @@ import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { QRCodeSVG } from "qrcode.react"
-import { Download, Share2, ArrowLeft, Sparkles, Image as ImageIcon, Palette } from "lucide-react"
+import { Download, Share2, ArrowLeft, Sparkles, Palette, Camera, FolderOpen } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
 import imageCompression from "browser-image-compression"
 import { useTheme } from "next-themes"
+import heic2any from "heic2any"
 
 const colorOptions = [
   { id: "dark-green", name: "Dark Green", bg: "#182b11" },
@@ -62,6 +63,9 @@ export function PassViewer({ passId }: PassViewerProps) {
 
   // Use theme hook inside the component
   const { resolvedTheme } = useTheme()
+
+  // Check if device is mobile
+  const isMobile = typeof window !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
   // Function to fetch stored photo from Supabase
   const fetchStoredPhoto = async (passId: string) => {
@@ -119,8 +123,29 @@ export function PassViewer({ passId }: PassViewerProps) {
 
     setIsUploading(true)
     try {
+      let processedFile = file
+
+      // Handle HEIC format conversion
+      if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+        try {
+          const convertedBlob = await heic2any({
+            blob: file,
+            toType: 'image/jpeg',
+            quality: 0.8
+          })
+          // Handle both single blob and array of blobs
+          const blobToUse = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob
+          processedFile = new File([blobToUse], file.name.replace(/\.(heic|heif)$/i, '.jpg'), {
+            type: 'image/jpeg'
+          })
+        } catch (heicError) {
+          console.error("Error converting HEIC:", heicError)
+          // Continue with original file if conversion fails
+        }
+      }
+
       // Compress the image
-      const compressedFile = await imageCompression(file, {
+      const compressedFile = await imageCompression(processedFile, {
         maxSizeMB: 1,
         maxWidthOrHeight: 1024,
         useWebWorker: true
@@ -142,8 +167,8 @@ export function PassViewer({ passId }: PassViewerProps) {
             body: JSON.stringify({
               passId: attendeeData?.id,
               photoData: base64Result,
-              fileName: file.name,
-              fileType: file.type
+              fileName: processedFile.name,
+              fileType: processedFile.type
             })
           })
           
@@ -522,7 +547,12 @@ export function PassViewer({ passId }: PassViewerProps) {
           {/* Welcome Message */}
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold">Personalize Your Pass</h1>
-            <p className="text-muted-foreground">Upload your selfie to create a unique Kairos memory</p>
+            <p className="text-muted-foreground">
+              {isMobile 
+                ? "Choose from your photos or take a new selfie to create a unique Kairos memory"
+                : "Upload your selfie to create a unique Kairos memory"
+              }
+            </p>
             <p className="text-sm font-medium text-green-600">Make it yours, {firstName} ✨</p>
           </div>
 
@@ -682,20 +712,56 @@ export function PassViewer({ passId }: PassViewerProps) {
           {/* Action Buttons */}
           <div className="space-y-4">
             {/* Photo Upload Section */}
-            <div className="flex space-x-3">
-              <Button 
-                onClick={() => fileInputRef.current?.click()}
-                variant="outline" 
-                className="flex-1 h-12"
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
-                ) : (
-                  <ImageIcon className="mr-2 h-5 w-5" />
-                )}
-                Upload Your Selfie to Personalize Your Pass
-              </Button>
+            <div className="space-y-3">
+              {/* Heading/Prompt for photo upload */}
+              <div className="text-center mb-2">
+                <h3 className="text-base font-bold text-white poppins-extrabold">
+                  CUSTOMIZE YOUR PASS BY UPLOADING YOUR SELFIE.
+                </h3>
+                <p className="text-xs text-muted-foreground italic">
+                  (Pssst... make it a cute one!)
+                </p>
+              </div>
+              {/* Mobile-friendly upload options */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  onClick={() => {
+                    if (fileInputRef.current) {
+                      fileInputRef.current.removeAttribute('capture')
+                      fileInputRef.current.click()
+                    }
+                  }}
+                  variant="outline" 
+                  className="h-12 flex flex-col items-center justify-center space-y-1"
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                  ) : (
+                    <FolderOpen className="h-5 w-5" />
+                  )}
+                  <span className="text-xs">Choose from Files</span>
+                </Button>
+                
+                <Button 
+                  onClick={() => {
+                    if (fileInputRef.current) {
+                      fileInputRef.current.setAttribute('capture', 'user')
+                      fileInputRef.current.click()
+                    }
+                  }}
+                  variant="outline" 
+                  className="h-12 flex flex-col items-center justify-center space-y-1"
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                  ) : (
+                    <Camera className="h-5 w-5" />
+                  )}
+                  <span className="text-xs">Take Photo</span>
+                </Button>
+              </div>
               
               {displayPhoto && (
                 <Button 
@@ -704,18 +770,24 @@ export function PassViewer({ passId }: PassViewerProps) {
                     setStoredPhotoUrl(null)
                   }}
                   variant="outline" 
-                  className="bg-red-50 hover:bg-red-100 text-red-600 border-red-200 h-12"
+                  className="w-full bg-red-50 hover:bg-red-100 text-red-600 border-red-200 h-10"
                 >
-                  Remove
+                  Remove Photo
                 </Button>
               )}
+              
+              {/* Helpful note about supported formats */}
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">
+                  Supports JPEG, PNG, HEIC, and other image formats
+                </p>
+              </div>
             </div>
 
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
-              capture="user"
+              accept="image/*,.heic,.heif"
               onChange={handlePhotoUpload}
               className="hidden"
             />
