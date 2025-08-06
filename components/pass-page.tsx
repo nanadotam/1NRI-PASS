@@ -20,7 +20,7 @@ const estherVerse = {
 
 const colorOptions = [
   { id: "dark-green", name: "Dark Green", bg: "#182b11" },
-  { id: "dark-purple", name: "Dark Purple", bg: "#2d1b69" },
+  { id: "dark-purple", name: "Dark Purple", bg: "#2B1128" },
   { id: "midnight-blue", name: "Midnight Blue", bg: "#0f1419" },
   { id: "deep-burgundy", name: "Deep Burgundy", bg: "#4a1810" },
 ]
