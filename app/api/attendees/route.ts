@@ -223,7 +223,75 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const email = searchParams.get('email')
     const phone = searchParams.get('phone')
+    const allAttendees = searchParams.get('all')
 
+    // If 'all' parameter is present, return all attendees with photos
+    if (allAttendees === 'true') {
+      const cookieStore = cookies()
+      const supabase = createClient(cookieStore)
+
+      // Fetch all attendees
+      const { data: attendees, error } = await supabase
+        .from('kairos_passes')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error("Database error:", error)
+        return NextResponse.json(
+          { success: false, error: "Database error" },
+          { status: 500 }
+        )
+      }
+
+      // For each attendee, fetch their photos
+      const attendeesWithPhotos = await Promise.all(
+        attendees.map(async (attendee) => {
+          try {
+            // Get photos for this attendee
+            const { data: files } = await supabase.storage
+              .from('kairos-photos')
+              .list('pass-selfies', {
+                limit: 100,
+                offset: 0,
+                sortBy: { column: 'created_at', order: 'desc' }
+              })
+
+            // Filter photos for this specific attendee
+            const attendeePhotos = files
+              ?.filter(file => file.name.startsWith(`${attendee.pass_id}-`))
+              .map(file => ({
+                name: file.name,
+                url: supabase.storage
+                  .from('kairos-photos')
+                  .getPublicUrl(`pass-selfies/${file.name}`).data.publicUrl,
+                created_at: file.created_at
+              }))
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) || []
+
+            return {
+              ...attendee,
+              photos: attendeePhotos,
+              latestPhoto: attendeePhotos.length > 0 ? attendeePhotos[0] : null
+            }
+          } catch (photoError) {
+            console.error(`Error fetching photos for attendee ${attendee.pass_id}:`, photoError)
+            return {
+              ...attendee,
+              photos: [],
+              latestPhoto: null
+            }
+          }
+        })
+      )
+
+      return NextResponse.json({
+        success: true,
+        data: attendeesWithPhotos
+      })
+    }
+
+    // Original single attendee lookup logic
     if (!email && !phone) {
       return NextResponse.json(
         { success: false, error: "Email or phone parameter is required" },
