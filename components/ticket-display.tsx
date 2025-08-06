@@ -8,17 +8,11 @@ import { QRCodeSVG } from "qrcode.react"
 import { Download, Share2 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
-
-const kairosQuote = "You didn't just show up. You aligned."
-
-const estherVerse = {
-  reference: "Esther 4:14",
-  text: "For if you remain silent at this time, relief and deliverance for the Jews will arise from another place, but you and your father's family will perish. And who knows but that you have come to your royal position for such a time as this?"
-}
+import { bibleVerses, genZAffirmations } from "@/components/pass-display"
 
 const colorOptions = [
   { id: "dark-green", name: "Dark Green", bg: "#182b11" },
-  { id: "dark-purple", name: "Dark Purple", bg: "#2d1b69" },
+  { id: "dark-purple", name: "Dark Purple", bg: "#2B1128" },
   { id: "midnight-blue", name: "Midnight Blue", bg: "#0f1419" },
   { id: "deep-burgundy", name: "Deep Burgundy", bg: "#4a1810" },
 ]
@@ -93,7 +87,7 @@ export function TicketDisplay() {
       try {
         await navigator.share({
           title: "My Kairos Ticket",
-          text: `I'm attending Kairos: A 1NRI Experience! ${kairosQuote}`,
+          text: `I'm attending Kairos: A 1NRI Experience! ${genZAffirmations[0]}`,
           url: `${window.location.origin}/verify/${state.currentAttendee.id}`,
         })
       } catch (error) {
@@ -109,6 +103,10 @@ export function TicketDisplay() {
   const { currentAttendee } = state
   const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/verify/${currentAttendee.id}`
   const colors = getPassColors(currentAttendee.passColor || "dark-green")
+
+  // Get random verse and affirmation
+  const randomVerse = bibleVerses[Math.floor(Math.random() * bibleVerses.length)]
+  const randomAffirmation = genZAffirmations[Math.floor(Math.random() * genZAffirmations.length)]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
@@ -188,17 +186,17 @@ export function TicketDisplay() {
               {/* Main Quote - Smaller */}
               <div className="absolute bottom-[110px] left-4 right-4 text-center">
                 <h2 className="poppins-extrabold italic text-white text-lg leading-tight">
-                  &ldquo;{kairosQuote}&rdquo;
+                  &ldquo;{randomAffirmation}&rdquo;
                 </h2>
               </div>
 
               {/* Bible Verse - Much Smaller */}
               <div className="absolute bottom-[40px] left-4 right-4 text-center">
                 <p className="poppins-regular text-white text-xs mb-2 leading-relaxed opacity-95">
-                  {estherVerse.text}
+                  {randomVerse.text}
                 </p>
                 <p className="font-jetbrains-mono italic text-white text-xs opacity-75">
-                  {estherVerse.reference}
+                  {randomVerse.reference}
                 </p>
               </div>
 

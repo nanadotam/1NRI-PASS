@@ -4,7 +4,7 @@ import { cookies } from "next/headers"
 
 export async function POST(request: NextRequest) {
   try {
-    const { passId, photoData } = await request.json()
+    const { passId, photoData, fileType } = await request.json()
     
     if (!passId || !photoData) {
       return NextResponse.json(
@@ -20,11 +20,24 @@ export async function POST(request: NextRequest) {
     const base64Data = photoData.replace(/^data:image\/[a-z]+;base64,/, "")
     const buffer = Buffer.from(base64Data, 'base64')
     
-    // Upload to Supabase storage
+    // Determine file extension based on file type
+    let fileExtension = 'jpg'
+    if (fileType) {
+      if (fileType.includes('png')) fileExtension = 'png'
+      else if (fileType.includes('gif')) fileExtension = 'gif'
+      else if (fileType.includes('webp')) fileExtension = 'webp'
+      else if (fileType.includes('heic') || fileType.includes('heif')) fileExtension = 'heic'
+    }
+    
+    // Generate unique filename using pass_id
+    const timestamp = Date.now()
+    const uniqueFileName = `${passId}-${timestamp}.${fileExtension}`
+    
+    // Upload to Supabase storage in the pass-selfies folder
     const { error } = await supabase.storage
       .from('kairos-photos')
-      .upload(`${passId}.jpg`, buffer, {
-        contentType: 'image/jpeg',
+      .upload(`pass-selfies/${uniqueFileName}`, buffer, {
+        contentType: fileType || 'image/jpeg',
         upsert: true
       })
 
@@ -39,12 +52,13 @@ export async function POST(request: NextRequest) {
     // Get public URL
     const { data: urlData } = supabase.storage
       .from('kairos-photos')
-      .getPublicUrl(`${passId}.jpg`)
+      .getPublicUrl(`pass-selfies/${uniqueFileName}`)
 
     return NextResponse.json({
       success: true,
       data: {
-        url: urlData.publicUrl
+        url: urlData.publicUrl,
+        fileName: uniqueFileName
       }
     })
 

@@ -4,19 +4,20 @@ import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { QRCodeSVG } from "qrcode.react"
-import { Download, Share2, Camera, Upload, ArrowLeft, Sparkles } from "lucide-react"
+import { Download, Share2, ArrowLeft, Sparkles, Image as ImageIcon, Palette } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
 import imageCompression from "browser-image-compression"
-
-const kairosQuote = "You didn't just show up. You aligned."
+import { useTheme } from "next-themes"
 
 const colorOptions = [
   { id: "dark-green", name: "Dark Green", bg: "#182b11" },
-  { id: "dark-purple", name: "Dark Purple", bg: "#2d1b69" },
+  { id: "dark-purple", name: "Dark Purple", bg: "#2B1128" },
   { id: "midnight-blue", name: "Midnight Blue", bg: "#0f1419" },
   { id: "deep-burgundy", name: "Deep Burgundy", bg: "#4a1810" },
 ]
+
+// Choose logo based on theme (moved inside component to use hook safely)
 
 const getPassColors = (color: string) => {
   const option = colorOptions.find(opt => opt.id === color)
@@ -37,8 +38,11 @@ export function PassViewer({ passId }: PassViewerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [attendeeData, setAttendeeData] = useState<{
     id: string;
+    passId?: string;
     first_name: string;
     last_name: string;
+    firstName?: string;
+    lastName?: string;
     email: string;
     phone_number: string;
     heard_about: string;
@@ -53,17 +57,47 @@ export function PassViewer({ passId }: PassViewerProps) {
   const [selectedColor, setSelectedColor] = useState<string>("dark-green")
   const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [storedPhotoUrl, setStoredPhotoUrl] = useState<string | null>(null)
+  const [showColorPicker, setShowColorPicker] = useState(false)
+
+  // Use theme hook inside the component
+  const { resolvedTheme } = useTheme()
+
+  // Function to fetch stored photo from Supabase
+  const fetchStoredPhoto = async (passId: string) => {
+    try {
+      // List files in the pass-selfies folder to find photos for this pass
+      const response = await fetch(`/api/storage/list-photos?passId=${passId}`)
+      const data = await response.json()
+      
+      if (data.success && data.photos.length > 0) {
+        // Get the most recent photo (last in the array)
+        const latestPhoto = data.photos[data.photos.length - 1]
+        setStoredPhotoUrl(latestPhoto.url)
+      }
+    } catch (error) {
+      console.error("Error fetching stored photo:", error)
+    }
+  }
 
   useEffect(() => {
     const fetchAttendeeData = async () => {
       try {
+        console.log('🔍 Fetching attendee data for passId:', passId)
         const response = await fetch(`/api/verify/${passId}`)
         const data = await response.json()
         
-        if (data.success) {
+        console.log('📋 API response:', data)
+        
+        if (data.success && data.data) {
+          console.log('✅ Setting attendee data:', data.data)
           setAttendeeData(data.data)
-          setSelectedColor(data.data.passColor || "dark-green")
+          setSelectedColor(data.data.passColor || data.data.theme || "dark-green")
+          
+          // Fetch any stored photos for this pass
+          await fetchStoredPhoto(passId)
         } else {
+          console.error('❌ API returned error:', data.message || 'Unknown error')
           setAttendeeData(null)
         }
       } catch (error) {
@@ -107,12 +141,17 @@ export function PassViewer({ passId }: PassViewerProps) {
             },
             body: JSON.stringify({
               passId: attendeeData?.id,
-              photoData: base64Result
+              photoData: base64Result,
+              fileName: file.name,
+              fileType: file.type
             })
           })
           
           const uploadData = await uploadResponse.json()
-          if (!uploadData.success) {
+          if (uploadData.success) {
+            // Update the stored photo URL with the new upload
+            setStoredPhotoUrl(uploadData.data.url)
+          } else {
             console.error("Failed to upload photo:", uploadData.error)
           }
         } catch (uploadError) {
@@ -128,43 +167,278 @@ export function PassViewer({ passId }: PassViewerProps) {
     }
   }
 
+  // Determine which photo to display (uploaded takes precedence over stored)
+  const displayPhoto = uploadedPhoto || storedPhotoUrl
+
   const downloadPass = async () => {
-    if (!passRef.current) return
+    if (!attendeeData) return
 
     try {
-      const html2canvas = (await import("html2canvas")).default
-      const canvas = await html2canvas(passRef.current, {
-        backgroundColor: "transparent",
-        scale: 3.6,
-        useCORS: true,
-        allowTaint: true,
-        foreignObjectRendering: true,
-      })
-
-      const finalCanvas = document.createElement('canvas')
-      finalCanvas.width = 1080
-      finalCanvas.height = 1920
-      const ctx = finalCanvas.getContext('2d')
+      console.log('🚀 Starting Puppeteer export...')
       
-      if (ctx) {
-        ctx.fillStyle = getPassColors(selectedColor).background
-        ctx.fillRect(0, 0, 1080, 1920)
-        
-        const scale = Math.min(1080 / canvas.width, 1920 / canvas.height)
-        const scaledWidth = canvas.width * scale
-        const scaledHeight = canvas.height * scale
-        const x = (1080 - scaledWidth) / 2
-        const y = (1920 - scaledHeight) / 2
-        
-        ctx.drawImage(canvas, x, y, scaledWidth, scaledHeight)
+      // Get the QR code SVG
+      const qrCodeSVG = `<svg width="170" height="170" viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+        <rect width="170" height="170" fill="white"/>
+        <text x="85" y="85" text-anchor="middle" dy=".3em" font-family="Arial" font-size="12" fill="black">QR Code</text>
+      </svg>`
+
+      // Prepare the photo (if exists)
+      let photoHtml = qrCodeSVG
+      if (displayPhoto) {
+        photoHtml = `<div style="background: white; padding: 30px; border-radius: 60px; box-shadow: 0 12px 40px rgba(0,0,0,0.2);">
+          <div style="width: 600px; height: 600px; border-radius: 45px; overflow: hidden;">
+            <img src="${displayPhoto}" alt="Uploaded photo" style="width: 600px; height: 600px; object-fit: cover; border-radius: 45px;" />
+          </div>
+        </div>`
+      } else {
+        // QR code with white background
+        photoHtml = `<div style="background: white; padding: 30px; border-radius: 60px; box-shadow: 0 12px 40px rgba(0,0,0,0.2);">
+          <div style="width: 600px; height: 600px; border-radius: 45px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: white;">
+            ${qrCodeSVG}
+          </div>
+        </div>`
       }
 
-      const link = document.createElement("a")
-      link.download = `kairos-pass-${attendeeData?.first_name?.replace(/\s+/g, "-").toLowerCase()}.png`
-      link.href = finalCanvas.toDataURL("image/png", 1.0)
+      // Create the HTML for the pass
+      const passHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Kairos Pass</title>
+            <style>
+              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+              
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              
+              body {
+                font-family: 'Inter', sans-serif;
+                background: ${getPassColors(selectedColor).background};
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                color: white;
+              }
+              
+              .pass-container {
+                width: 1080px;
+                height: 1920px;
+                background: ${getPassColors(selectedColor).background};
+                border-radius: 48px;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 60px 120px rgba(0,0,0,0.3);
+              }
+              
+              .qr-area {
+                position: absolute;
+                top: 120px;
+                left: 50%;
+                transform: translateX(-50%);
+              }
+              
+              .logo-area {
+                position: absolute;
+                top: 720px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 100%;
+                padding: 0 60px;
+                text-align: center;
+              }
+              
+              .attendee-info {
+                position: absolute;
+                bottom: 720px;
+                left: 16px;
+              }
+              
+              .pass-id {
+                position: absolute;
+                bottom: 720px;
+                right: 16px;
+                text-align: right;
+              }
+              
+              .quote-area {
+                position: absolute;
+                bottom: 540px;
+                left: 16px;
+                right: 16px;
+                text-align: center;
+              }
+              
+              .verse-area {
+                position: absolute;
+                bottom: 250px;
+                left: 60px;
+                right: 60px;
+                text-align: center;
+              }
+              
+              .footer {
+                position: absolute;
+                bottom: 8px;
+                left: 16px;
+                right: 16px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              }
+              
+              .nri-logo {
+                position: absolute;
+                top: 8px;
+                left: 8px;
+                opacity: 0.6;
+              }
+              
+              .attendee-name {
+                font-weight: bold;
+                font-size: 48px;
+                margin-bottom: 16px;
+                line-height: 1.2;
+              }
+              
+              .attendee-label {
+                font-style: italic;
+                font-size: 32px;
+                opacity: 0.75;
+              }
+              
+              .pass-id-text {
+                font-weight: bold;
+                font-size: 40px;
+                margin-bottom: 16px;
+                line-height: 1.2;
+              }
+              
+              .pass-id-label {
+                font-style: italic;
+                font-size: 32px;
+                opacity: 0.75;
+              }
+              
+              .quote-text {
+                font-weight: 800;
+                font-style: italic;
+                font-size: 48px;
+                line-height: 1.3;
+              }
+              
+              .verse-text {
+                font-size: 32px;
+                margin-bottom: 16px;
+                line-height: 1.4;
+                opacity: 0.95;
+              }
+              
+              .verse-reference {
+                font-family: 'Courier New', monospace;
+                font-style: italic;
+                font-size: 28px;
+                opacity: 0.75;
+              }
+              
+              .footer-text {
+                font-size: 28px;
+                opacity: 0.7;
+              }
+              
+              .footer-bold {
+                font-weight: bold;
+                font-size: 28px;
+                opacity: 0.9;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="pass-container">
+              <div class="qr-area">
+                ${photoHtml}
+              </div>
+              
+              <div class="logo-area">
+                <img src="/images/kairos_PNG_UHD.png" alt="Kairos Logo" width="720" height="360" style="object-fit: contain; filter: drop-shadow(0 24px 48px rgba(0,0,0,0.4));" />
+              </div>
+              
+              <div class="attendee-info">
+                <div class="attendee-name">${attendeeData.firstName || attendeeData.first_name} ${attendeeData.lastName || attendeeData.last_name}</div>
+                <div class="attendee-label">Attendee Name</div>
+              </div>
+              
+              <div class="pass-id">
+                <div class="pass-id-text">${attendeeData.passId || attendeeData.id}</div>
+                <div class="pass-id-label">PASS ID</div>
+              </div>
+              
+              <div class="quote-area">
+                <div class="quote-text">"${attendeeData.message_text}"</div>
+              </div>
+              
+              <div class="verse-area">
+                <div class="verse-text">${attendeeData.verse_text}</div>
+                <div class="verse-reference">${attendeeData.verse_reference}</div>
+              </div>
+              
+              <div class="footer">
+                <div>
+                  <span class="footer-text">Updated </span>
+                  <span class="footer-bold">August 16, 2025</span>
+                </div>
+                <div>
+                  <span class="footer-text">WWW.1NRI.STORE</span>
+                </div>
+              </div>
+              
+              <div class="nri-logo">
+                <img src="/images/1NRI Logo - Fixed - Transparent (1).png" alt="1NRI Logo" width="60" height="60" style="object-fit: contain;" />
+              </div>
+            </div>
+          </body>
+        </html>
+      `
+
+      console.log('📝 Generated HTML for pass')
+
+      // Send to the API
+      const response = await fetch('/api/export-pass', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          html: passHtml,
+          width: 1080,
+          height: 1920
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status}`)
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `kairos-pass-${attendeeData.first_name?.replace(/\s+/g, "-").toLowerCase()}.png`
+      document.body.appendChild(link)
       link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      console.log('✅ Pass exported successfully')
+
     } catch (error) {
-      console.error("Error downloading pass:", error)
+      console.error("❌ Error exporting pass:", error)
     }
   }
 
@@ -173,8 +447,8 @@ export function PassViewer({ passId }: PassViewerProps) {
       try {
         await navigator.share({
           title: "My Kairos Pass",
-          text: `I'm attending Kairos: A 1NRI Experience! ${kairosQuote} #MyKairosPass`,
-          url: `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.id}`,
+          text: `I'm attending Kairos: A 1NRI Experience! ${attendeeData.message_text} #MyKairosPass`,
+          url: `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.passId || attendeeData.id}`,
         })
       } catch (error) {
         console.error("Error sharing:", error)
@@ -217,7 +491,7 @@ export function PassViewer({ passId }: PassViewerProps) {
             <Sparkles className="h-16 w-16 mx-auto mb-4 text-green-400" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold animate-pulse">Decrypting Kairos Pass...</h1>
+            <h1 className="text-2xl font-bold animate-pulse">Decrypting Your Kairos Pass...</h1>
             <div className="flex space-x-1 justify-center">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce"></div>
               <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -229,9 +503,9 @@ export function PassViewer({ passId }: PassViewerProps) {
     )
   }
 
-  const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.id}`
+  const qrCodeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.passId || attendeeData.id}`
   const colors = getPassColors(selectedColor)
-  const firstName = attendeeData.first_name || 'Attendee'
+  const firstName = attendeeData.firstName || attendeeData.first_name || 'Attendee'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -247,9 +521,47 @@ export function PassViewer({ passId }: PassViewerProps) {
         <div className="max-w-md mx-auto space-y-6">
           {/* Welcome Message */}
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold">Welcome back, {firstName}.</h1>
-            <p className="text-muted-foreground">This is your Kairos Pass.</p>
-            <p className="text-sm font-medium text-green-600">You were meant to be here. 🔒</p>
+            <h1 className="text-3xl font-bold">Personalize Your Pass</h1>
+            <p className="text-muted-foreground">Upload your selfie to create a unique Kairos memory</p>
+            <p className="text-sm font-medium text-green-600">Make it yours, {firstName} ✨</p>
+          </div>
+
+          {/* Color Picker */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium">Pass Color</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowColorPicker(!showColorPicker)}
+                className="px-3 py-1"
+              >
+                <Palette className="w-4 h-4 mr-1" />
+                <span className="text-xs">Change</span>
+              </Button>
+            </div>
+            
+            {showColorPicker && (
+              <div className="grid grid-cols-2 gap-2 p-3 border rounded-lg bg-card">
+                {colorOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => setSelectedColor(option.id)}
+                    className={`flex items-center space-x-2 p-2 rounded-lg border transition-all w-full ${
+                      selectedColor === option.id 
+                        ? 'border-primary bg-primary/10' 
+                        : 'border-border hover:bg-muted'
+                    }`}
+                  >
+                    <div 
+                      className="w-4 h-4 rounded-full" 
+                      style={{ backgroundColor: option.bg }}
+                    />
+                    <span className="text-xs">{option.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Pass Design */}
@@ -263,20 +575,33 @@ export function PassViewer({ passId }: PassViewerProps) {
                 backgroundColor: colors.background 
               }}
             >
-              {/* QR Code Area - Top Section */}
+              {/* QR Code or Photo Area - Top Section */}
               <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-white p-3 rounded-2xl shadow-lg">
-                <QRCodeSVG 
-                  value={qrCodeUrl} 
-                  size={170} 
-                  level="H" 
-                  includeMargin={false}
-                  fgColor="#000000"
-                  bgColor="#ffffff"
-                />
+                {displayPhoto ? (
+                  <div className="relative w-[170px] h-[170px] rounded-xl overflow-hidden">
+                    <Image
+                      src={displayPhoto}
+                      alt="Uploaded photo"
+                      width={170}
+                      height={170}
+                      className="object-cover w-full h-full"
+                      crossOrigin="anonymous"
+                    />
+                  </div>
+                ) : (
+                  <QRCodeSVG 
+                    value={qrCodeUrl} 
+                    size={170} 
+                    level="H" 
+                    includeMargin={false}
+                    fgColor="#000000"
+                    bgColor="#ffffff"
+                  />
+                )}
               </div>
 
               {/* Main Kairos Logo - Center */}
-              <div className="absolute top-[150px] left-1/2 transform -translate-x-1/2 w-full px-4">
+              <div className="absolute top-[190px] left-1/2 transform -translate-x-1/2 w-full px-4">
                 <div className="flex justify-center items-center">
                   <Image
                     src="/images/kairos_PNG_UHD.png"
@@ -287,6 +612,7 @@ export function PassViewer({ passId }: PassViewerProps) {
                     style={{
                       filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))'
                     }}
+                    crossOrigin="anonymous"
                   />
                 </div>
               </div>
@@ -294,7 +620,7 @@ export function PassViewer({ passId }: PassViewerProps) {
               {/* Attendee Information - Left Side */}
               <div className="absolute bottom-[200px] left-4">
                 <h3 className="font-jetbrains-mono font-bold text-white text-sm mb-1 leading-tight">
-                  {attendeeData.first_name} {attendeeData.last_name}
+                  {attendeeData.firstName || attendeeData.first_name} {attendeeData.lastName || attendeeData.last_name}
                 </h3>
                 <p className="font-jetbrains-mono italic text-white text-[10px] opacity-75">
                   Attendee Name
@@ -304,7 +630,7 @@ export function PassViewer({ passId }: PassViewerProps) {
               {/* Pass ID - Right Side */}
               <div className="absolute bottom-[200px] right-4 text-right">
                 <h4 className="font-jetbrains-mono font-bold text-white text-xs mb-1 leading-tight">
-                  {attendeeData.id}
+                  {attendeeData.passId || attendeeData.id}
                 </h4>
                 <p className="font-jetbrains-mono italic text-white text-[10px] opacity-75">
                   PASS ID
@@ -314,19 +640,19 @@ export function PassViewer({ passId }: PassViewerProps) {
               {/* Main Quote */}
               <div className="absolute bottom-[150px] left-4 right-4 text-center">
                 <h2 className="poppins-extrabold italic text-white text-sm leading-tight">
-                  &ldquo;{kairosQuote}&rdquo;
+                  &ldquo;{attendeeData.message_text}&rdquo;
                 </h2>
               </div>
 
-              {/* Bible Verse */}
-              <div className="absolute bottom-[50px] left-4 right-4 text-center">
-                <p className="poppins-regular text-white text-[9px] mb-1 leading-relaxed opacity-95">
-                  {attendeeData.verse_text}
-                </p>
-                <p className="font-jetbrains-mono italic text-white text-[8px] opacity-75">
-                  {attendeeData.verse_reference}
-                </p>
-              </div>
+                              {/* Bible Verse from Database */}
+                <div className="absolute bottom-[50px] left-4 right-4 text-center">
+                  <p className="poppins-regular text-white text-[9px] mb-1 leading-relaxed opacity-95">
+                    {attendeeData.verse_text}
+                  </p>
+                  <p className="font-jetbrains-mono italic text-white text-[8px] opacity-75">
+                    {attendeeData.verse_reference}
+                  </p>
+                </div>
 
               {/* Footer */}
               <div className="absolute bottom-2 left-4 right-4 flex justify-between items-center">
@@ -342,45 +668,43 @@ export function PassViewer({ passId }: PassViewerProps) {
               {/* 1NRI Logo - Top Left */}
               <div className="absolute top-2 left-2">
                 <Image
-                  src="/images/1NRI Logo - Fixed - Transparent (1).png"
+                  src={resolvedTheme === "light" ? "/images/1NRI Logo - Black.png" : "/images/1NRI Logo - Fixed - Transparent (1).png"}
                   alt="1NRI Logo"
                   width={20}
                   height={20}
                   className="object-contain opacity-60"
+                  crossOrigin="anonymous"
                 />
               </div>
             </div>
           </div>
 
-          {/* Photo Upload Section */}
+          {/* Action Buttons */}
           <div className="space-y-4">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Add a memory from your Kairos moment 📸</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Upload a photo to replace the QR code on your pass
-              </p>
-            </div>
-
+            {/* Photo Upload Section */}
             <div className="flex space-x-3">
               <Button 
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline" 
-                className="flex-1"
+                className="flex-1 h-12"
                 disabled={isUploading}
               >
                 {isUploading ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
                 ) : (
-                  <Upload className="mr-2 h-4 w-4" />
+                  <ImageIcon className="mr-2 h-5 w-5" />
                 )}
-                {uploadedPhoto ? 'Change Photo' : 'Upload Photo'}
+                Upload Your Selfie to Personalize Your Pass
               </Button>
               
-              {uploadedPhoto && (
+              {displayPhoto && (
                 <Button 
-                  onClick={() => setUploadedPhoto(null)}
+                  onClick={() => {
+                    setUploadedPhoto(null)
+                    setStoredPhotoUrl(null)
+                  }}
                   variant="outline" 
-                  className="bg-red-50 hover:bg-red-100 text-red-600 border-red-200"
+                  className="bg-red-50 hover:bg-red-100 text-red-600 border-red-200 h-12"
                 >
                   Remove
                 </Button>
@@ -391,51 +715,32 @@ export function PassViewer({ passId }: PassViewerProps) {
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              capture="user"
               onChange={handlePhotoUpload}
               className="hidden"
             />
 
-            {uploadedPhoto && (
-              <div className="text-center">
-                <div className="relative inline-block">
-                  <Image
-                    src={uploadedPhoto}
-                    alt="Uploaded photo"
-                    width={200}
-                    height={200}
-                    className="rounded-lg object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
-                    <Camera className="h-8 w-8 text-white" />
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Photo will replace QR code on download
-                </p>
+            {/* Download and Share Buttons */}
+            <div className="flex space-x-3">
+              <Button onClick={downloadPass} className="flex-1 bg-green-600 hover:bg-green-700 h-12">
+                <Download className="mr-2 h-5 w-5" />
+                Download Personalized Pass
+              </Button>
+              <Button onClick={sharePass} variant="outline" className="flex-1 h-12">
+                <Share2 className="mr-2 h-5 w-5" />
+                Share
+              </Button>
+            </div>
+
+            {/* Kairos Hashtag */}
+            <div className="text-center p-4 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg">
+              <h3 className="font-semibold text-green-800 mb-2">Share Your Kairos Moment</h3>
+              <p className="text-sm text-green-700 mb-3">
+                Post this on social media with the hashtag
+              </p>
+              <div className="bg-white px-4 py-2 rounded-lg border border-green-300 inline-block">
+                <span className="font-mono text-green-600 font-bold">#MyKairosPass</span>
               </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex space-x-3">
-            <Button onClick={downloadPass} className="flex-1 bg-green-600 hover:bg-green-700">
-              <Download className="mr-2 h-4 w-4" />
-              {uploadedPhoto ? 'Download Pass + Photo' : 'Download Pass'}
-            </Button>
-            <Button onClick={sharePass} variant="outline" className="flex-1">
-              <Share2 className="mr-2 h-4 w-4" />
-              Share
-            </Button>
-          </div>
-
-          {/* Social Media Prompt */}
-          <div className="text-center p-4 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg">
-            <h3 className="font-semibold text-green-800 mb-2">Share Your Kairos Moment</h3>
-            <p className="text-sm text-green-700 mb-3">
-              Post this on social media with the hashtag
-            </p>
-            <div className="bg-white px-4 py-2 rounded-lg border border-green-300 inline-block">
-              <span className="font-mono text-green-600 font-bold">#MyKairosPass</span>
             </div>
           </div>
         </div>

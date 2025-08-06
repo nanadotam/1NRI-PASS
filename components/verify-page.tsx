@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Calendar, MapPin, User, ArrowLeft } from "lucide-react"
+import { CheckCircle, Calendar, MapPin, User, ArrowLeft, Camera } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
@@ -17,6 +17,7 @@ export function VerifyPage({ passId }: VerifyPageProps) {
   const router = useRouter()
   const [attendeeData, setAttendeeData] = useState<{
     id: string;
+    passId?: string;
     first_name: string;
     last_name: string;
     email: string;
@@ -156,6 +157,27 @@ export function VerifyPage({ passId }: VerifyPageProps) {
                     <strong>Heard about us:</strong> {attendeeData.heard_about}
                   </p>
                 </div>
+
+                {/* Bible Verse and Message */}
+                <div className="border-t pt-4 space-y-3">
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-800 mb-2">
+                      <strong>Your Kairos Message:</strong>
+                    </p>
+                    <p className="text-sm italic text-gray-700 mb-3">
+                      &ldquo;{attendeeData.message_text}&rdquo;
+                    </p>
+                    <p className="text-xs text-gray-600 mb-1">
+                      <strong>Bible Verse:</strong>
+                    </p>
+                    <p className="text-xs text-gray-700 mb-1">
+                      {attendeeData.verse_text}
+                    </p>
+                    <p className="text-xs text-gray-500 font-mono">
+                      {attendeeData.verse_reference}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Event Details */}
@@ -193,13 +215,28 @@ export function VerifyPage({ passId }: VerifyPageProps) {
               {/* Pass ID */}
               <div className="text-center border-t pt-4">
                 <p className="text-xs text-gray-500 mb-1">Pass ID</p>
-                <p className="font-mono text-xs text-gray-600">{attendeeData.id}</p>
+                <p className="font-mono text-xs text-gray-600">{attendeeData.passId || attendeeData.id}</p>
                 <p className="text-xs text-gray-500 mt-2">
                   Registered: {new Date(attendeeData.timestamp).toLocaleDateString()}
                 </p>
               </div>
             </CardContent>
           </Card>
+
+          {/* Personalize Pass Button */}
+          <div className="text-center space-y-4">
+            <Button 
+              onClick={() => router.push(`/pass/${passId}/personalize`)}
+              size="lg"
+              className="w-full h-20 text-2xl font-bold bg-gradient-to-r from-green-600 to-purple-600 hover:from-green-700 hover:to-purple-700 text-white shadow-2xl transform hover:scale-105 transition-all duration-200"
+            >
+              <Camera className="mr-4 h-10 w-10" />
+              Personalize Your Pass
+            </Button>
+            <p className="text-xl text-muted-foreground font-medium">
+              Upload your selfie to create a unique memory
+            </p>
+          </div>
 
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
