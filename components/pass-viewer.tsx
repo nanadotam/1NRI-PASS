@@ -751,18 +751,22 @@ export function PassViewer({ passId }: PassViewerProps) {
 
           {/* Action Buttons */}
           <div className="space-y-4">
-                                        {/* Photo Upload Section */}
-              <div className="relative space-y-3">
-                {/* Heading/Prompt for photo upload */}
-                <div className="text-center mb-2">
-                  <h3 className="text-base font-bold text-white poppins-extrabold">
-                    CUSTOMIZE YOUR PASS BY UPLOADING YOUR SELFIE.
-                  </h3>
-                  <p className="text-xs text-muted-foreground italic">
-                    (Pssst... make it a cute one!)
-                  </p>
-                </div>
-                
+            {/* Photo Upload Section */}
+            <div className="relative space-y-3">
+              {/* Heading/Prompt for photo upload */}
+              <div className="text-center mb-2">
+                <h3
+                  className={`
+                    text-base font-bold poppins-extrabold
+                    ${resolvedTheme === "light" ? "text-black" : "text-white"}
+                  `}
+                >
+                  CUSTOMIZE YOUR PASS BY UPLOADING YOUR SELFIE.
+                </h3>
+                <p className="text-xs text-muted-foreground italic">
+                  (Pssst... make it a cute one!)
+                </p>
+              </div>
                 {/* Loading overlay when uploading */}
                 {isUploading && (
                   <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
