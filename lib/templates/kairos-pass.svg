@@ -119,13 +119,11 @@
     <tspan x="0" y="24">to accuse you.</tspan>
   </text>
   
-  <!-- Add extra gap before verse reference -->
-  <g transform="translate(0,16)">
-    <!-- Verse Reference - Centered -->
-    <text class="st1" transform="translate(160 520)" text-anchor="middle">
-      <tspan x="0" y="0">Isaiah 54:17</tspan>
-    </text>
-  </g>
+  <!-- Verse Reference - Centered -->
+  <text class="st1" transform="translate(160 520)" text-anchor="middle">
+    <tspan x="0" y="0">Isaiah 54:17</tspan>
+  </text>
+  
   <!-- Footer -->
   <g>
     <g class="st0">
@@ -134,4 +132,4 @@
     </g>
     <text class="st2" transform="translate(237.92 555.14)"><tspan x="0" y="0">WWW.1NRI.STORE</tspan></text>
   </g>
-</svg>
+</svg> 
