@@ -251,7 +251,7 @@ export function PassDisplay() {
           },
           selectedColor,
           displayPhoto: null, // No photo in pass display
-          size: { width: 1080, height: 1920 },
+          size: { width: 320, height: 568 },
           format: 'jpg',
           scale: 3
         }),

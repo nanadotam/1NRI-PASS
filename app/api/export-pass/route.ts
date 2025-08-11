@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       attendeeData, 
       selectedColor, 
       displayPhoto, 
-      size = { width: 1080, height: 1920 },
+      size = { width: 320, height: 568 }, // Fixed: Updated to match new SVG template dimensions
       format = 'jpg', // Default to JPG for automatic conversion
       scale = 3 // Default to 3x scale for high quality
     } = await request.json()
@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
     })
 
     console.log('✅ SVG generated successfully')
+    console.log('📄 SVG content length:', svgContent.length)
 
     // For SVG format, return the original content directly
     if (format === 'svg') {
@@ -52,27 +53,42 @@ export async function POST(request: NextRequest) {
     
     const browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-web-security'],
     })
 
     const page = await browser.newPage()
 
-    // Set content with proper scaling
-    await page.setContent(`
+    // Set content with proper scaling and ensure SVG renders correctly
+    const htmlContent = `
+      <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="utf-8">
           <style>
-            body { margin: 0; padding: 0; }
+            body { 
+              margin: 0; 
+              padding: 0; 
+              background: transparent;
+              overflow: hidden;
+              width: 100vw;
+              height: 100vh;
+            }
             svg { 
               width: 100%; 
               height: 100%; 
               display: block;
+              background: transparent;
+            }
+            * {
+              box-sizing: border-box;
             }
           </style>
         </head>
         <body>${svgContent}</body>
       </html>
-    `)
+    `
+
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
 
     // Set viewport size at the scaled dimensions
     const scaledWidth = Math.ceil(size.width * scale)
@@ -83,6 +99,34 @@ export async function POST(request: NextRequest) {
       height: scaledHeight,
       deviceScaleFactor: 1,
     })
+
+    // Wait for SVG to fully render
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // Debug: Check if SVG is rendering correctly
+    const svgElement = await page.$('svg')
+    if (svgElement) {
+      const svgInfo = await page.evaluate((svg) => {
+        return {
+          width: svg.getAttribute('width'),
+          height: svg.getAttribute('height'),
+          viewBox: svg.getAttribute('viewBox'),
+          hasContent: svg.children.length > 0,
+          computedStyle: {
+            width: window.getComputedStyle(svg).width,
+            height: window.getComputedStyle(svg).height
+          }
+        }
+      }, svgElement)
+      console.log('🔍 SVG Debug Info:', svgInfo)
+    } else {
+      console.log('⚠️ No SVG element found on page')
+    }
+
+    // Debug: Check page content
+    const pageContent = await page.content()
+    console.log('📄 Page content length:', pageContent.length)
+    console.log('🔍 SVG in page:', pageContent.includes('<svg'))
 
     let buffer
     let contentType

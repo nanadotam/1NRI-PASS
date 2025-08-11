@@ -79,6 +79,12 @@
   </defs>
   <rect class="st10" width="320" height="568"/>
   <rect class="st8" x="56.67" y="34.87" width="206.67" height="206.67" rx="16" ry="16"/>
+  
+  <!-- Kairos Logo Placeholder - will be replaced by actual image -->
+  <g class="kairos-logo-placeholder">
+    <text x="160" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="900" fill="#D4AF37">KAIROS</text>
+  </g>
+  
   <g>
     <text class="st4" transform="translate(16 368)"><tspan x="0" y="0">Attendee Name</tspan></text>
     <text class="st6" transform="translate(16 378)"><tspan x="0" y="0">Attendee Name</tspan></text>
