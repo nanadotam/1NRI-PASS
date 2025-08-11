@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Google Fonts Import -->
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&amp;display=swap');
+      
+      .background { fill: #331A33; }
+      .attendee-name { font-family: 'JetBrains Mono', monospace; font-size: 54px; font-weight: 700; fill: white; }
+      .attendee-label { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 400; font-style: italic; fill: white; opacity: 0.75; }
+      .pass-id { font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 700; fill: white; }
+      .pass-id-label { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 400; font-style: italic; fill: white; opacity: 0.75; }
+      .message-text { font-family: 'Poppins', sans-serif; font-size: 54px; font-weight: 800; font-style: italic; fill: white; }
+      .verse-text { font-family: 'Poppins', sans-serif; font-size: 40px; font-weight: 400; fill: white; opacity: 0.95; }
+      .verse-reference { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 400; font-style: italic; fill: white; opacity: 0.75; }
+      .footer-text { font-family: 'Poppins', sans-serif; font-size: 36px; font-weight: 400; fill: white; opacity: 0.7; }
+      .footer-bold { font-family: 'Poppins', sans-serif; font-size: 36px; font-weight: 600; fill: white; opacity: 0.9; }
+      .nri-text { font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 600; fill: white; opacity: 0.6; }
+    </style>
+  </defs>
+  
+  <!-- Background with rounded corners - matches the rounded-2xl class -->
+  <rect class="background" width="1080" height="1920" rx="48" ry="48"/>
+  
+  <!-- 1NRI Logo - Top Left - matches top-2 left-2 positioning -->
+  <g class="nri-logo" opacity="0.6">
+    <text x="68" y="68" class="nri-text">INRI</text>
+  </g>
+  
+  <!-- Photo/QR Code Area - matches top-8 positioning and 170x170 size -->
+  <g class="photo-area">
+    <!-- White background with rounded corners - matches bg-white p-3 rounded-2xl -->
+    <rect x="270" y="108" width="540" height="540" rx="36" ry="36" fill="white"/>
+    <!-- Placeholder text - will be replaced by actual photo or QR code -->
+    <text x="540" y="378" text-anchor="middle" dy=".3em" font-family="JetBrains Mono" font-size="32" fill="#331A33">Photo/QR Code</text>
+  </g>
+  
+  <!-- Kairos Logo - matches top-[150px] positioning and 240x120 size -->
+  <g class="logo-area">
+    <!-- Logo placeholder - will be replaced by actual image -->
+    <rect x="420" y="675" width="240" height="120" fill="transparent"/>
+    <text x="540" y="735" text-anchor="middle" font-family="Poppins" font-size="48" font-weight="900" fill="#D4AF37">KAIROS</text>
+  </g>
+  
+  <!-- Attendee Information - Left Side - matches bottom-[200px] left-4 -->
+  <g class="attendee-info">
+    <text class="attendee-name" x="108" y="1080">Attendee Name</text>
+    <text class="attendee-label" x="108" y="1134">Attendee Name</text>
+  </g>
+  
+  <!-- Pass ID - Right Side - matches bottom-[200px] right-4 -->
+  <g class="pass-id-info">
+    <text class="pass-id" x="972" y="1080" text-anchor="end">PASS ID</text>
+    <text class="pass-id-label" x="972" y="1134" text-anchor="end">PASS ID</text>
+  </g>
+  
+  <!-- Message Text - matches bottom-[150px] positioning -->
+  <text class="message-text" x="540" y="1215" text-anchor="middle">"This isn't just an event. This is your moment."</text>
+  
+  <!-- Bible Verse - matches bottom-[50px] positioning -->
+  <g class="verse-area">
+    <text class="verse-text" x="540" y="1350" text-anchor="middle">No weapon formed against you will succeed, and you will silence every voice raised to accuse you.</text>
+    <text class="verse-reference" x="540" y="1404" text-anchor="middle">Isaiah 54:17</text>
+  </g>
+  
+  <!-- Footer - matches bottom-2 positioning -->
+  <g class="footer">
+    <text class="footer-text" x="108" y="1836">Updated <tspan class="footer-bold">August 16, 2025</tspan></text>
+    <text class="footer-text" x="972" y="1836" text-anchor="end">WWW.1NRI.STORE</text>
+  </g>
+</svg> 

@@ -1,88 +1,131 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getTemplateGenerator } from '@/lib/templates'
 import puppeteer from 'puppeteer'
-import fs from 'fs'
-import path from 'path'
 
 export async function POST(request: NextRequest) {
   try {
-    const { html, width = 1080, height = 1920 } = await request.json()
+    const { 
+      template = 'kairos-pass', 
+      attendeeData, 
+      selectedColor, 
+      displayPhoto, 
+      size = { width: 1080, height: 1920 },
+      format = 'svg'
+    } = await request.json()
 
-    if (!html) {
-      return NextResponse.json({ error: 'HTML content is required' }, { status: 400 })
+    if (!attendeeData) {
+      return NextResponse.json({ error: 'Attendee data is required' }, { status: 400 })
     }
 
-    console.log('🚀 Starting Puppeteer export...')
-    console.log('📏 Dimensions:', width, 'x', height)
+    console.log('🚀 Starting pass export...')
+    console.log('📏 Format:', format)
+    console.log('📏 Dimensions:', size.width, 'x', size.height)
 
-    // Convert images to base64
-    const imageToBase64 = (imagePath: string): string => {
-      try {
-        const fullPath = path.join(process.cwd(), 'public', imagePath)
-        const imageBuffer = fs.readFileSync(fullPath)
-        const base64 = imageBuffer.toString('base64')
-        const ext = path.extname(imagePath).toLowerCase()
-        const mimeType = ext === '.png' ? 'image/png' : 'image/jpeg'
-        return `data:${mimeType};base64,${base64}`
-      } catch (error) {
-        console.error('Error converting image to base64:', error)
-        return ''
-      }
+    // Get the appropriate template generator
+    const generateTemplate = getTemplateGenerator(template)
+
+    // Generate the SVG using the template
+    const svgContent = await generateTemplate({
+      attendeeData,
+      selectedColor,
+      displayPhoto,
+      size
+    })
+
+    console.log('✅ SVG generated successfully')
+
+    // For SVG format, return the original content directly
+    if (format === 'svg') {
+      return new NextResponse(svgContent, {
+        headers: {
+          'Content-Type': 'image/svg+xml',
+          'Content-Disposition': `attachment; filename="kairos-pass-${attendeeData.first_name?.toLowerCase()}.svg"`
+        },
+      })
     }
 
-    const kairosLogoBase64 = imageToBase64('/images/kairos_PNG_UHD.png')
-    const nriLogoBase64 = imageToBase64('/images/1NRI Logo - Fixed - Transparent (1).png')
+    // For other formats (PNG, JPG, PDF), use Puppeteer
+    console.log('🖥️ Converting to', format, 'using Puppeteer...')
     
-    console.log('🖼️ Kairos logo base64 length:', kairosLogoBase64.length)
-    console.log('🖼️ 1NRI logo base64 length:', nriLogoBase64.length)
-
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     })
 
     const page = await browser.newPage()
-    await page.setViewport({ width, height })
 
-    // Replace image paths with base64 data
-    const processedHtml = html
-      .replace('/images/kairos_PNG_UHD.png', kairosLogoBase64)
-      .replace('/images/1NRI Logo - Fixed - Transparent (1).png', nriLogoBase64)
+    // Set content with proper scaling
+    await page.setContent(`
+      <html>
+        <head>
+          <style>
+            body { margin: 0; padding: 0; }
+            svg { width: 100%; height: 100%; }
+          </style>
+        </head>
+        <body>${svgContent}</body>
+      </html>
+    `)
 
-    // Set content and wait for everything to load
-    await page.setContent(processedHtml, {
-      waitUntil: ['networkidle0', 'domcontentloaded'],
+    // Set viewport size
+    await page.setViewport({
+      width: Math.ceil(size.width),
+      height: Math.ceil(size.height),
+      deviceScaleFactor: 1,
     })
 
-    // Wait a bit more for any dynamic content
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    let buffer
+    let contentType
+    let fileExtension
 
-    const buffer = await page.screenshot({ 
-      type: 'png',
-      fullPage: false,
-      omitBackground: false,
-      clip: {
-        x: 0,
-        y: 0,
-        width: width,
-        height: height
-      }
-    })
+    if (format === 'png') {
+      buffer = await page.screenshot({ 
+        type: 'png',
+        fullPage: false,
+        omitBackground: false
+      })
+      contentType = 'image/png'
+      fileExtension = 'png'
+    } else if (format === 'jpg' || format === 'jpeg') {
+      buffer = await page.screenshot({ 
+        type: 'jpeg',
+        fullPage: false,
+        omitBackground: false,
+        quality: 90
+      })
+      contentType = 'image/jpeg'
+      fileExtension = 'jpg'
+    } else if (format === 'pdf') {
+      buffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        width: `${size.width}px`,
+        height: `${size.height}px`
+      })
+      contentType = 'application/pdf'
+      fileExtension = 'pdf'
+    } else {
+      throw new Error(`Unsupported format: ${format}`)
+    }
 
     await browser.close()
 
     console.log('✅ Export completed successfully')
 
-    // Return the image as a downloadable blob
+    // Return the file for download
     return new NextResponse(Buffer.from(buffer), {
       status: 200,
       headers: {
-        'Content-Type': 'image/png',
-        'Content-Disposition': 'attachment; filename="kairos-pass.png"',
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename="kairos-pass-${attendeeData.first_name?.toLowerCase()}.${fileExtension}"`,
       },
     })
 
   } catch (error) {
     console.error('❌ Export error:', error)
-    return NextResponse.json({ error: 'Failed to export pass' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Failed to export pass',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 } 
