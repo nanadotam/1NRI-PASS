@@ -227,43 +227,49 @@ export function PassDisplay() {
   }, [state.currentAttendee, router])
 
   const downloadPass = async () => {
-    if (!passRef.current) return
+    if (!state.currentAttendee) return
 
     try {
-      const html2canvas = (await import("html2canvas")).default
-      const canvas = await html2canvas(passRef.current, {
-        backgroundColor: "transparent",
-        scale: 3.6, // Higher scale for 1080x1920
-        useCORS: true,
-        allowTaint: true,
-        foreignObjectRendering: true,
+      // Use the new SVG-based export system for better quality
+      const response = await fetch('/api/export-pass', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          template: 'kairos-pass',
+          attendeeData: {
+            id: state.currentAttendee.id,
+            firstName: state.currentAttendee.fullName.split(' ')[0],
+            lastName: state.currentAttendee.fullName.split(' ').slice(1).join(' '),
+            first_name: state.currentAttendee.fullName.split(' ')[0],
+            last_name: state.currentAttendee.fullName.split(' ').slice(1).join(' '),
+            message_text: genZAffirmations[0],
+            verse_text: randomVerse.text,
+            verse_reference: randomVerse.reference,
+            passColor: selectedColor
+          },
+          selectedColor,
+          displayPhoto: null, // No photo in pass display
+          size: { width: 1080, height: 1920 },
+          format: 'jpg',
+          scale: 3
+        }),
       })
 
-      // Create final canvas with exact 1080x1920 dimensions
-      const finalCanvas = document.createElement('canvas')
-      finalCanvas.width = 1080
-      finalCanvas.height = 1920
-      const ctx = finalCanvas.getContext('2d')
-      
-      if (ctx) {
-        // Fill background
-        ctx.fillStyle = getPassColors(selectedColor).background
-        ctx.fillRect(0, 0, 1080, 1920)
-        
-        // Calculate scaling to fit the content properly
-        const scale = Math.min(1080 / canvas.width, 1920 / canvas.height)
-        const scaledWidth = canvas.width * scale
-        const scaledHeight = canvas.height * scale
-        const x = (1080 - scaledWidth) / 2
-        const y = (1920 - scaledHeight) / 2
-        
-        ctx.drawImage(canvas, x, y, scaledWidth, scaledHeight)
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status}`)
       }
 
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+
       const link = document.createElement("a")
-      link.download = `kairos-pass-${state.currentAttendee?.fullName.replace(/\s+/g, "-").toLowerCase()}.png`
-      link.href = finalCanvas.toDataURL("image/png", 1.0)
+      link.download = `kairos-pass-${state.currentAttendee?.fullName.replace(/\s+/g, "-").toLowerCase()}-3x.jpg`
+      link.href = url
       link.click()
+      
+      window.URL.revokeObjectURL(url)
     } catch (error) {
       console.error("Error downloading pass:", error)
     }
@@ -462,7 +468,7 @@ export function PassDisplay() {
           <div className="flex space-x-3">
             <Button onClick={downloadPass} className="flex-1 bg-green-600 hover:bg-green-700">
               <Download className="mr-2 h-4 w-4" />
-              Download Pass (1080x1920)
+              Download JPG Pass (3x Scale)
             </Button>
             <Button onClick={sharePass} variant="outline" className="flex-1 bg-transparent">
               <Share2 className="mr-2 h-4 w-4" />

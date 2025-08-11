@@ -63,7 +63,7 @@ export function PassViewer({ passId }: PassViewerProps) {
   const [downloadProgress, setDownloadProgress] = useState<string>("")
   const [storedPhotoUrl, setStoredPhotoUrl] = useState<string | null>(null)
   const [showColorPicker, setShowColorPicker] = useState(false)
-  const [exportFormat, setExportFormat] = useState<'svg' | 'png' | 'jpg' | 'pdf'>('svg')
+  // Removed exportFormat state
 
   // Use theme hook inside the component
   const { resolvedTheme } = useTheme()
@@ -220,8 +220,8 @@ export function PassViewer({ passId }: PassViewerProps) {
       console.log('🚀 Starting pass export...')
       
       setDownloadProgress("Generating pass design...")
-      
-      // Send attendee data to the API for SVG generation
+
+      // Use the correct base dimensions (320x568) and let the API handle scaling
       const response = await fetch('/api/export-pass', {
         method: 'POST',
         headers: {
@@ -232,8 +232,8 @@ export function PassViewer({ passId }: PassViewerProps) {
           attendeeData,
           selectedColor,
           displayPhoto,
-          size: { width: 1080, height: 1920 },
-          format: exportFormat
+          size: { width: 1080 * 3, height: 1920 * 3 }, // 3x scale
+          format: 'jpg'
         }),
       })
 
@@ -247,7 +247,7 @@ export function PassViewer({ passId }: PassViewerProps) {
 
       const link = document.createElement('a')
       link.href = url
-      link.download = `kairos-pass-${attendeeData.first_name?.replace(/\s+/g, "-").toLowerCase()}.${exportFormat}`
+      link.download = `kairos-pass-${attendeeData.first_name?.replace(/\s+/g, "-").toLowerCase()}.jpg`
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -404,24 +404,7 @@ export function PassViewer({ passId }: PassViewerProps) {
               </div>
             )}
           </div>
-
-          {/* Export Format Selection */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium">Export Format</h3>
-              <select 
-                value={exportFormat} 
-                onChange={(e) => setExportFormat(e.target.value as 'svg' | 'png' | 'jpg' | 'pdf')}
-                className="px-3 py-1 border rounded-lg text-sm bg-background"
-              >
-                <option value="svg">SVG (Vector)</option>
-                <option value="png">PNG (High Quality)</option>
-                <option value="jpg">JPG (Compressed)</option>
-                <option value="pdf">PDF (Document)</option>
-              </select>
-            </div>
-          </div>
-
+          
           {/* Pass Design */}
           <div className="flex justify-center">
             <div 

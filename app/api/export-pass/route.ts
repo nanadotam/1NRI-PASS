@@ -10,7 +10,8 @@ export async function POST(request: NextRequest) {
       selectedColor, 
       displayPhoto, 
       size = { width: 1080, height: 1920 },
-      format = 'svg'
+      format = 'jpg', // Default to JPG for automatic conversion
+      scale = 3 // Default to 3x scale for high quality
     } = await request.json()
 
     if (!attendeeData) {
@@ -19,7 +20,9 @@ export async function POST(request: NextRequest) {
 
     console.log('🚀 Starting pass export...')
     console.log('📏 Format:', format)
-    console.log('📏 Dimensions:', size.width, 'x', size.height)
+    console.log('📏 Base dimensions:', size.width, 'x', size.height)
+    console.log('📏 Scale:', scale + 'x')
+    console.log('📏 Final dimensions:', size.width * scale, 'x', size.height * scale)
 
     // Get the appropriate template generator
     const generateTemplate = getTemplateGenerator(template)
@@ -44,8 +47,8 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // For other formats (PNG, JPG, PDF), use Puppeteer
-    console.log('🖥️ Converting to', format, 'using Puppeteer...')
+    // For other formats (PNG, JPG, PDF), use Puppeteer with scaling
+    console.log('🖥️ Converting to', format, 'using Puppeteer at', scale + 'x scale...')
     
     const browser = await puppeteer.launch({
       headless: true,
@@ -60,17 +63,24 @@ export async function POST(request: NextRequest) {
         <head>
           <style>
             body { margin: 0; padding: 0; }
-            svg { width: 100%; height: 100%; }
+            svg { 
+              width: 100%; 
+              height: 100%; 
+              display: block;
+            }
           </style>
         </head>
         <body>${svgContent}</body>
       </html>
     `)
 
-    // Set viewport size
+    // Set viewport size at the scaled dimensions
+    const scaledWidth = Math.ceil(size.width * scale)
+    const scaledHeight = Math.ceil(size.height * scale)
+    
     await page.setViewport({
-      width: Math.ceil(size.width),
-      height: Math.ceil(size.height),
+      width: scaledWidth,
+      height: scaledHeight,
       deviceScaleFactor: 1,
     })
 
@@ -91,7 +101,7 @@ export async function POST(request: NextRequest) {
         type: 'jpeg',
         fullPage: false,
         omitBackground: false,
-        quality: 90
+        quality: 95 // High quality for 3x scale
       })
       contentType = 'image/jpeg'
       fileExtension = 'jpg'
@@ -99,8 +109,8 @@ export async function POST(request: NextRequest) {
       buffer = await page.pdf({
         format: 'A4',
         printBackground: true,
-        width: `${size.width}px`,
-        height: `${size.height}px`
+        width: `${scaledWidth}px`,
+        height: `${scaledHeight}px`
       })
       contentType = 'application/pdf'
       fileExtension = 'pdf'
@@ -110,14 +120,14 @@ export async function POST(request: NextRequest) {
 
     await browser.close()
 
-    console.log('✅ Export completed successfully')
+    console.log('✅ Export completed successfully at', scale + 'x scale')
 
     // Return the file for download
     return new NextResponse(Buffer.from(buffer), {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Content-Disposition': `attachment; filename="kairos-pass-${attendeeData.first_name?.toLowerCase()}.${fileExtension}"`,
+        'Content-Disposition': `attachment; filename="kairos-pass-${attendeeData.first_name?.toLowerCase()}-${scale}x.${fileExtension}"`,
       },
     })
 
