@@ -1,5 +1,5 @@
-import { PassViewer } from "@/components/pass-viewer"
+import { FullscreenPassViewer } from "@/components/fullscreen-pass-viewer"
 
 export default function PassPage({ params }: { params: { id: string } }) {
-  return <PassViewer passId={params.id} />
+  return <FullscreenPassViewer passId={params.id} />
 } 
