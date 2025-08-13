@@ -232,6 +232,7 @@ export function PassViewer({ passId }: PassViewerProps) {
           attendeeData,
           selectedColor,
           displayPhoto,
+
           size: { width: 320, height: 568 }, // Base SVG dimensions
           format: 'jpg'
         }),
