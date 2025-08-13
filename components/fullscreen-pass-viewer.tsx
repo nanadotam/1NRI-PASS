@@ -438,7 +438,7 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
         {/* Screenshot Instructions */}
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center">
           <div className="bg-black/50 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm">
-            💡 Take a screenshot to save your pass
+            💡 Take a screenshot OR click the download button to save your pass
           </div>
         </div>
       </div>
@@ -745,7 +745,7 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
                 ) : (
                   <>
                     <Download className="mr-2 h-5 w-5" />
-                    Take Screenshot
+                    Download Pass
                   </>
                 )}
               </Button>
