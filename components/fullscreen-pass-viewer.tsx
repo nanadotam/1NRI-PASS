@@ -232,7 +232,7 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
       }
     } else {
       // Fallback: copy to clipboard
-      const url = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData.passId || attendeeData.id}`
+      const url = `${typeof window !== "undefined" ? window.location.origin : ""}/pass/${attendeeData?.passId || attendeeData?.id}`
       try {
         await navigator.clipboard.writeText(url)
         alert('Pass link copied to clipboard!')
