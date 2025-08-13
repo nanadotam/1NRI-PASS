@@ -3,135 +3,153 @@
   <!-- Generator: Adobe Illustrator 29.6.1, SVG Export Plug-In . SVG Version: 2.1.1 Build 9)  -->
   <defs>
     <style>
-      .st0, .st1, .st2, .st3, .st4, .st5, .st6 {
+      .st0 {
+        fill: #d4af37;
+        font-size: 24px;
+      }
+
+      .st0, .st1, .st2, .st3, .st4, .st5, .st6, .st7, .st8, .st9, .st10, .st11, .st12 {
         isolation: isolate;
       }
 
-      .st0, .st2 {
-        opacity: .7;
-      }
-
-      .st7, .st1, .st2, .st3, .st8, .st9, .st4, .st5, .st6 {
-        fill: #fff;
-      }
-
-      .st7, .st2 {
-        font-family: Poppins-Regular, Poppins, Arial, sans-serif;
-      }
-
-      .st7, .st6 {
-        font-size: 9px;
-      }
-
-      .st1 {
-        font-family: JetBrainsMono-SemiBoldItalic, 'JetBrains Mono', 'Courier New', monospace;
-      }
-
-      .st1, .st2, .st5 {
-        font-size: 8px;
-      }
-
-      .st1, .st9, .st6 {
-        font-style: italic;
-      }
-
-      .st1, .st5 {
-        font-weight: 600;
-      }
-
-      .st1, .st6 {
-        opacity: .75;
-      }
-
-      .st3 {
-        font-size: 12px;
-      }
-
-      .st3, .st9, .st4 {
+      .st0, .st5, .st7, .st8, .st10 {
         font-weight: 700;
       }
 
-      .st3, .st4 {
-        font-family: JetBrainsMono-Bold, 'JetBrains Mono', 'Courier New', monospace;
+      .st0, .st10 {
+        font-family: Arial-BoldMT, Arial;
       }
 
-      .st10 {
+      .st1 {
+        font-family: JetBrainsMono-SemiBoldItalic, 'JetBrains Mono';
+      }
+
+      .st1, .st4 {
+        font-weight: 600;
+      }
+
+      .st1, .st4, .st5, .st13, .st7, .st8, .st9, .st10, .st11, .st12 {
+        fill: #fff;
+      }
+
+      .st1, .st4, .st11 {
+        font-size: 8px;
+      }
+
+      .st1, .st7, .st9 {
+        font-style: italic;
+      }
+
+      .st2 {
+        opacity: .7;
+      }
+
+      .st3 {
+        opacity: .8;
+      }
+
+      .st4 {
+        font-family: Poppins-SemiBold, Poppins;
+      }
+
+      .st5, .st8 {
+        font-family: JetBrainsMono-Bold, 'JetBrains Mono';
+      }
+
+      .st5, .st10 {
+        font-size: 12px;
+      }
+
+      .st14 {
         fill: #331a33;
       }
 
-      .st9 {
-        font-family: Poppins-ExtraBoldItalic, Poppins, Arial, sans-serif;
+      .st7 {
+        font-family: Poppins-BoldItalic, Poppins;
       }
 
-      .st9, .st4 {
+      .st7, .st8 {
         font-size: 14px;
       }
 
-      .st5 {
-        font-family: Poppins-SemiBold, Poppins, Arial, sans-serif;
-        opacity: .9;
+      .st9 {
+        font-family: JetBrainsMono-Italic, 'JetBrains Mono';
       }
 
-      .st6 {
-        font-family: JetBrainsMono-Italic, 'JetBrains Mono', 'Courier New', monospace;
+      .st9, .st12 {
+        font-size: 9px;
+      }
+
+      .st11, .st12 {
+        font-family: Poppins-Regular, Poppins;
       }
     </style>
   </defs>
-  
-  <!-- Background -->
-  <rect class="st10" width="320" height="568"/>
-  
-  <!-- 1NRI Logo - Top Left -->
-  <g class="nri-logo-placeholder">
-    <text x="16" y="24" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" opacity="0.6">1NRI</text>
+  <rect class="st14" width="320" height="568"/>
+  <g class="st6">
+    <text class="st10" transform="translate(16 24)"><tspan x="0" y="0">1NRI</tspan></text>
   </g>
-  
-  <!-- QR Code/Photo Area - Top Center -->
-  <rect class="st8" x="56.67" y="34.87" width="206.67" height="206.67" rx="16" ry="16"/>
-  
-  <!-- Kairos Logo - Center Below QR -->
-  <g class="kairos-logo-placeholder">
-    <text x="160" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="900" fill="#D4AF37">KAIROS</text>
+  <rect class="st13" x="56.67" y="34.87" width="206.67" height="206.67" rx="16" ry="16"/>
+  <g class="st6">
+    <text class="st0" transform="translate(108.21 280)"><tspan x="0" y="0">KAIROS</tspan></text>
   </g>
-  
-  <!-- Attendee Information - Left Side -->
   <g>
-    <text class="st4" transform="translate(16 400)"><tspan x="0" y="0">Attendee Name</tspan></text>
-    <text class="st6" transform="translate(16 410)"><tspan x="0" y="0">Attendee Name</tspan></text>
-  </g>
-  
-  <!-- Pass ID - Right Side -->
-  <g>
-    <text class="st3" transform="translate(253.6 400)"><tspan x="0" y="0">PASS ID</tspan></text>
-    <text class="st6" transform="translate(265.94 410)"><tspan x="0" y="0">PASS ID</tspan></text>
-  </g>
-  
-  <!-- Main Quote - Centered -->
-  <text class="st9" transform="translate(160 450)" text-anchor="middle">
-    <tspan x="0" y="0">"This isn't just an event. This is your</tspan>
-    <tspan x="0" y="20">moment."</tspan>
-  </text>
-  
-  <!-- Bible Verse - Centered -->
-  <text class="st7" transform="translate(160 490)" text-anchor="middle">
-    <tspan x="0" y="0">No weapon formed against you will succeed,</tspan>
-    <tspan x="0" y="12">and you will silence every voice raised</tspan>
-    <tspan x="0" y="24">to accuse you.</tspan>
-  </text>
-  
-  <!-- Add extra gap before verse reference -->
-  <g transform="translate(0,16)">
-    <!-- Verse Reference - Centered -->
-    <text class="st1" transform="translate(160 520)" text-anchor="middle">
-      <tspan x="0" y="0">Isaiah 54:17</tspan>
-    </text>
-  </g>
-  <!-- Footer -->
-  <g>
-    <g class="st0">
-      <text class="st2" transform="translate(16 555.14)"><tspan x="0" y="0">Updated </tspan></text>
-      <text class="st5" transform="translate(53.04 555.14)"><tspan x="0" y="0">August 16, 2025</tspan></text>
+    <g class="st6">
+      <g class="st6">
+        <text class="st8" transform="translate(16 359)"><tspan x="0" y="0">Attendee Name</tspan></text>
+      </g>
     </g>
-    <text class="st2" transform="translate(237.92 555.14)"><tspan x="0" y="0">WWW.1NRI.STORE</tspan></text>
+    <g class="st3">
+      <g class="st6">
+        <text class="st9" transform="translate(16 369)"><tspan x="0" y="0">Attendee Name</tspan></text>
+      </g>
+    </g>
+  </g>
+  <g>
+    <g class="st6">
+      <g class="st6">
+        <text class="st5" transform="translate(253.6 359)"><tspan x="0" y="0">PASS ID</tspan></text>
+      </g>
+    </g>
+    <g class="st3">
+      <g class="st6">
+        <text class="st9" transform="translate(266.2 369)"><tspan x="0" y="0">PASS ID</tspan></text>
+      </g>
+    </g>
+  </g>
+  <g class="st6">
+    <g class="st6">
+      <text class="st7" transform="translate(31.36 407.72)"><tspan x="0" y="0">&quot;This isn&apos;t just an event. This is your</tspan></text>
+    </g>
+    <g class="st6">
+      <text class="st7" transform="translate(123.99 427.72)"><tspan x="0" y="0">moment.&quot;</tspan></text>
+    </g>
+  </g>
+  <g class="st6">
+    <g class="st6">
+      <text class="st1" transform="translate(131.2 510)"><tspan x="0" y="0">Isaiah 54:17</tspan></text>
+    </g>
+  </g>
+  <g>
+    <g class="st2">
+      <g class="st6">
+        <g class="st6">
+          <text class="st11" transform="translate(16 555.14)"><tspan x="0" y="0">Updated</tspan></text>
+        </g>
+      </g>
+      <g class="st6">
+        <g class="st6">
+          <text class="st4" transform="translate(53.04 555.14)"><tspan x="0" y="0">August 16, 2025</tspan></text>
+        </g>
+      </g>
+    </g>
+    <g class="st6">
+      <g class="st6">
+        <text class="st11" transform="translate(237.92 555.14)"><tspan x="0" y="0">WWW.1NRI.STORE</tspan></text>
+      </g>
+    </g>
+  </g>
+  <g class="st6">
+    <text class="st12" transform="translate(59.31 459.97)"><tspan x="0" y="0">No weapon formed against you will succeed,</tspan></text>
   </g>
 </svg>
