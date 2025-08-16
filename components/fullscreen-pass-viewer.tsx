@@ -4,13 +4,14 @@ import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { QRCodeSVG } from "qrcode.react"
-import { Share2, ArrowLeft, Sparkles, Palette, Camera, FolderOpen, Maximize2, Download } from "lucide-react"
+import { Share2, ArrowLeft, Sparkles, Palette, Camera, FolderOpen, Maximize2, Download, Mail } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
 import imageCompression from "browser-image-compression"
 import { useTheme } from "next-themes"
 import heic2any from "heic2any"
 import html2canvas from "html2canvas"
+import { generatePassHTML } from "@/lib/pass-to-html"
 
 const colorOptions = [
   { id: "dark-green", name: "Dark Green", bg: "#182b11" },
@@ -62,6 +63,7 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
   const [storedPhotoUrl, setStoredPhotoUrl] = useState<string | null>(null)
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isSendingEmail, setIsSendingEmail] = useState(false)
 
   const { resolvedTheme } = useTheme()
 
@@ -105,7 +107,8 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
         setAttendeeData(null)
       } finally {
         setIsLoading(false)
-        setTimeout(() => setShowFlicker(false), 3000)
+        // Show flicker animation for 800ms - quick and snappy
+        setTimeout(() => setShowFlicker(false), 800)
       }
     }
 
@@ -186,7 +189,7 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
       setUploadProgress("Upload failed. Please try again.")
     } finally {
       setIsUploading(false)
-      setTimeout(() => setUploadProgress(""), 2000)
+              setTimeout(() => setUploadProgress(""), 1500)
     }
   }
 
@@ -244,6 +247,51 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen)
+  }
+
+  const sendPassEmail = async () => {
+    if (!attendeeData) return
+
+    setIsSendingEmail(true)
+    try {
+      // Generate HTML pass
+      const baseUrl = typeof window !== "undefined" ? window.location.origin : ""
+      const passHtml = generatePassHTML(
+        {
+          ...attendeeData,
+          photoUrl: displayPhoto
+        },
+        baseUrl
+      )
+
+      // Send email
+      const response = await fetch('/api/send-pass-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          passId: attendeeData.passId || attendeeData.id,
+          email: attendeeData.email,
+          attendeeName: attendeeData.firstName || attendeeData.first_name,
+          passHtml: passHtml
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        alert('✅ Pass sent to your email successfully!')
+      } else {
+        console.error('Failed to send email:', data.error)
+        alert('❌ Failed to send email. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error sending email:', error)
+      alert('❌ Error sending email. Please try again.')
+    } finally {
+      setIsSendingEmail(false)
+    }
   }
 
   if (isLoading) {
@@ -424,6 +472,18 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             ) : (
               <Download className="h-4 w-4" />
+            )}
+          </Button>
+          <Button 
+            onClick={sendPassEmail}
+            variant="outline"
+            className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+            disabled={isSendingEmail}
+          >
+            {isSendingEmail ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            ) : (
+              <Mail className="h-4 w-4" />
             )}
           </Button>
           <Button 
@@ -730,33 +790,55 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
               className="hidden"
             />
 
-            {/* Screenshot and Share Buttons */}
-            <div className="flex space-x-3">
+            {/* Screenshot, Share, and Email Buttons */}
+            <div className="space-y-3">
+              <div className="flex space-x-3">
+                <Button 
+                  onClick={takeScreenshot} 
+                  className="flex-1 bg-green-600 hover:bg-green-700 h-12"
+                  disabled={isScreenshotting}
+                >
+                  {isScreenshotting ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span className="text-sm">Taking Screenshot...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Download className="mr-2 h-5 w-5" />
+                      Download Pass
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  onClick={sharePassLink} 
+                  variant="outline" 
+                  className="flex-1 h-12"
+                  disabled={isScreenshotting}
+                >
+                  <Share2 className="mr-2 h-5 w-5" />
+                  Share Link
+                </Button>
+              </div>
+              
+              {/* Email Pass Button */}
               <Button 
-                onClick={takeScreenshot} 
-                className="flex-1 bg-green-600 hover:bg-green-700 h-12"
-                disabled={isScreenshotting}
+                onClick={sendPassEmail}
+                variant="outline"
+                className="w-full h-12 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                disabled={isSendingEmail}
               >
-                {isScreenshotting ? (
+                {isSendingEmail ? (
                   <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span className="text-sm">Taking Screenshot...</span>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-700"></div>
+                    <span className="text-sm">Sending Email...</span>
                   </div>
                 ) : (
                   <>
-                    <Download className="mr-2 h-5 w-5" />
-                    Download Pass
+                    <Mail className="mr-2 h-5 w-5" />
+                    Send Pass to Email
                   </>
                 )}
-              </Button>
-              <Button 
-                onClick={sharePassLink} 
-                variant="outline" 
-                className="flex-1 h-12"
-                disabled={isScreenshotting}
-              >
-                <Share2 className="mr-2 h-5 w-5" />
-                Share Link
               </Button>
             </div>
 

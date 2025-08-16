@@ -86,8 +86,8 @@ export function RegistrationForm() {
       // Store in context for pass generation
       dispatch({ type: "SET_CURRENT_ATTENDEE", payload: attendeeData })
 
-      // Simulate processing time
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Quick processing time - snappy experience
+      await new Promise((resolve) => setTimeout(resolve, 300))
 
       setIsSubmitting(false)
       router.push("/pass")

@@ -113,8 +113,8 @@ export function PassViewer({ passId }: PassViewerProps) {
         setAttendeeData(null)
       } finally {
         setIsLoading(false)
-        // Show flicker animation for 3 seconds
-        setTimeout(() => setShowFlicker(false), 3000)
+        // Show flicker animation for 800ms - quick and snappy
+        setTimeout(() => setShowFlicker(false), 800)
       }
     }
 
@@ -203,7 +203,7 @@ export function PassViewer({ passId }: PassViewerProps) {
     } finally {
       setIsUploading(false)
       // Clear progress message after a short delay
-      setTimeout(() => setUploadProgress(""), 2000)
+              setTimeout(() => setUploadProgress(""), 1500)
     }
   }
 
@@ -263,7 +263,7 @@ export function PassViewer({ passId }: PassViewerProps) {
     } finally {
       setIsDownloading(false)
       // Clear progress message after a short delay
-      setTimeout(() => setDownloadProgress(""), 2000)
+              setTimeout(() => setDownloadProgress(""), 1500)
     }
   }
 
