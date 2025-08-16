@@ -4,13 +4,12 @@ import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { QRCodeSVG } from "qrcode.react"
-import { Share2, ArrowLeft, Sparkles, Palette, Camera, FolderOpen, Maximize2, Download, Mail } from "lucide-react"
+import { Share2, ArrowLeft, Sparkles, Palette, Camera, FolderOpen, Maximize2, Mail } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
 import imageCompression from "browser-image-compression"
 import { useTheme } from "next-themes"
 import heic2any from "heic2any"
-import html2canvas from "html2canvas"
 import { generatePassHTML } from "@/lib/pass-to-html"
 
 const colorOptions = [
@@ -59,7 +58,6 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
   const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<string>("")
-  const [isScreenshotting, setIsScreenshotting] = useState(false)
   const [storedPhotoUrl, setStoredPhotoUrl] = useState<string | null>(null)
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -194,33 +192,6 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
   }
 
   const displayPhoto = uploadedPhoto || storedPhotoUrl
-
-  const takeScreenshot = async () => {
-    if (!passRef.current) return
-
-    setIsScreenshotting(true)
-    try {
-      const canvas = await html2canvas(passRef.current, {
-        backgroundColor: null,
-        scale: 2, // Higher quality
-        useCORS: true,
-        allowTaint: true,
-        logging: false
-      })
-
-      // Create download link
-      const link = document.createElement('a')
-      link.download = `kairos-pass-${attendeeData?.first_name?.replace(/\s+/g, "-").toLowerCase() || 'attendee'}.png`
-      link.href = canvas.toDataURL('image/png')
-      link.click()
-
-      console.log('✅ Screenshot taken successfully')
-    } catch (error) {
-      console.error('❌ Error taking screenshot:', error)
-    } finally {
-      setIsScreenshotting(false)
-    }
-  }
 
   const sharePassLink = async () => {
     if (navigator.share && attendeeData) {
@@ -784,7 +755,6 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
                 onClick={sharePassLink} 
                 variant="outline" 
                 className="w-full h-12"
-                disabled={isScreenshotting}
               >
                 <Share2 className="mr-2 h-5 w-5" />
                 Share Link
