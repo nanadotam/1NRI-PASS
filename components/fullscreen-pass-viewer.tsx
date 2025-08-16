@@ -463,18 +463,6 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
         {/* Fullscreen Controls */}
         <div className="absolute top-4 right-4 flex space-x-2">
           <Button 
-            onClick={takeScreenshot}
-            variant="outline"
-            className="bg-white/10 hover:bg-white/20 text-white border-white/20"
-            disabled={isScreenshotting}
-          >
-            {isScreenshotting ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-          </Button>
-          <Button 
             onClick={sendPassEmail}
             variant="outline"
             className="bg-white/10 hover:bg-white/20 text-white border-white/20"
@@ -790,36 +778,17 @@ export function FullscreenPassViewer({ passId }: FullscreenPassViewerProps) {
               className="hidden"
             />
 
-            {/* Screenshot, Share, and Email Buttons */}
+            {/* Share and Email Buttons */}
             <div className="space-y-3">
-              <div className="flex space-x-3">
-                <Button 
-                  onClick={takeScreenshot} 
-                  className="flex-1 bg-green-600 hover:bg-green-700 h-12"
-                  disabled={isScreenshotting}
-                >
-                  {isScreenshotting ? (
-                    <div className="flex items-center space-x-2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span className="text-sm">Taking Screenshot...</span>
-                    </div>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-5 w-5" />
-                      Download Pass
-                    </>
-                  )}
-                </Button>
-                <Button 
-                  onClick={sharePassLink} 
-                  variant="outline" 
-                  className="flex-1 h-12"
-                  disabled={isScreenshotting}
-                >
-                  <Share2 className="mr-2 h-5 w-5" />
-                  Share Link
-                </Button>
-              </div>
+              <Button 
+                onClick={sharePassLink} 
+                variant="outline" 
+                className="w-full h-12"
+                disabled={isScreenshotting}
+              >
+                <Share2 className="mr-2 h-5 w-5" />
+                Share Link
+              </Button>
               
               {/* Email Pass Button */}
               <Button 
